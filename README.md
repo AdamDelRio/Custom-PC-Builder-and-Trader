@@ -1,2 +1,9 @@
 # CSC365GroupProject
-Group Project for CSC 365 by Adam Del Rio, Dillon Murphy, Nick Patrick, and Sam Bock
+
+**Contributors:** 
+- Name: Dillon Murphy, CalPoly Email: ddmurphy@calpoly.edu
+- Name: Adam Del Rio, CalPoly Email:
+- Name: Nick Patrick, CalPoly Email:
+- Name: Sam Bock, CalPoly Email:
+
+## Proposal
