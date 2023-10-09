@@ -10,6 +10,8 @@
 - As a user, I am looking to see how much it would cost to upgrade my hard drive
 - As a streamer, I want PC parts that are powerful enough to support streaming and gaming
 - As an editor, I need to make sure that the parts I buy are capable of performing all of my needs
+- As a software developer, I want to plan out and purchase a dual-monitor setup to have a more efficient workflow. 
+- As a student, I want to build a budget-friendly PC for educational purposes and light gaming
 
 ## Exceptions
 
