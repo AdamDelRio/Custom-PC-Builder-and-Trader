@@ -1,5 +1,15 @@
 ## User Stories
 
+- As a customer, I want a new monitor to play League of Legends
+- As a customer, I want to trade in my old GPU for cash to purchase a new one
+- As a user, I want to research which GPU would be compatible with my current setup
+- As a customer, I want to purchase a new graphics card that is compatible with my PC
+- As a trader, I am looking to trade a CPU I bought for a GPU that is compatible with my PC
+- As a user, I just want to see what parts I could afford to build a PC within my current budget
+- As a customer, I am looking to update my RAM with a budget of $100
+- As a user, I am looking to see how much it would cost to upgrade my hard drive
+- As a streamer, I want PC parts that are powerful enough to support streaming and gaming
+- As an editor, I need to make sure that the parts I buy are capable of performing all of my needs
 
 ## Exceptions
 
