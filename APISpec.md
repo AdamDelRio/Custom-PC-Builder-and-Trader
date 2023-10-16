@@ -105,6 +105,26 @@ Creates cart if no cart under user, else creates cart and adds parts to cart
 }
 ```
 
+### 2.4 Add Item to Template - `/template/existing/{template_id}/add_part/{part_id}` - POST
+
+Adds a PC part to an existing template and returns a true/false boolean if successful
+
+**Request:**
+
+```json
+{
+	"item_id":"string",
+	"product_type":"string"
+}
+```
+
+**Returns:**
+```json
+{
+	"result":"boolean"
+}
+```
+
 ## 3. Customer Purchasing
 
 The API calls are made in this sequence when making a purchase:
