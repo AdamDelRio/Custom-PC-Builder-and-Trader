@@ -160,7 +160,7 @@ Creates a new cart for a specific customer.
 
 ```json
 {
-  "account_id": "string"
+	"account_id": "string"
 }
 ```
 
@@ -168,7 +168,7 @@ Creates a new cart for a specific customer.
 
 ```json
 {
-    "cart_id": "string" /* This id will be used for future calls to add items and checkout */
+	"cart_id": "string" /* This id will be used for future calls to add items and checkout */
 }
 ```
 
@@ -180,7 +180,7 @@ Updates the quantity and customer selling id of a specific item in a cart.
 
 ```json
 {
-  "quantity": "integer"
+	"quantity": "integer"
 	"customer_selling_id": "string"
 }
 ```
@@ -201,10 +201,10 @@ Handles the checkout process for a specific cart.
 
 ```json
 {
-  "cardholder_name": "string"
+  	"cardholder_name": "string"
 	"cc_number": "string",
-  "exp_date": "string",
-  "cvv" : "string", 
+  	"exp_date": "string",
+  	"cvv" : "string", 
 	"street_address": "string"
 	"city": "string"
 	"state": "string"
