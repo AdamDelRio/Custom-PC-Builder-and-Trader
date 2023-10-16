@@ -23,7 +23,7 @@
 
 ```json
 {
-	"ID": "Integer"
+	"id": "Integer"
 }
 ```
 
@@ -42,7 +42,7 @@
 
 ```json
 {
-	"ID":"Integer"
+	"id":"Integer"
 }
 ```
 
