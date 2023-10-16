@@ -23,7 +23,7 @@
 
 ```json
 {
-	"success":"boolean" /*True if created, false if error*/
+	"ID": "Integer"
 }
 ```
 
@@ -42,7 +42,7 @@
 
 ```json
 {
-	"success":"boolean" /*True if logged in, false if password error*/
+	"ID":"Integer"
 }
 ```
 
