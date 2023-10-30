@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from src.api import auth
-
+from src import database as db
+import sqlalchemy
 router = APIRouter(
     prefix="/carts",
     tags=["cart"],
@@ -11,13 +12,30 @@ router = APIRouter(
 
 
 class NewCart(BaseModel):
-    customer: str
+    name: str
+    address:str
+    phone:str
+    email:str
 
 
 @router.post("/")
 def create_cart(new_cart: NewCart):
     """ """
-    return {"cart_id": 1}
+    with db.engine.begin() as connection:
+        cust_id = connection.execute(sqlalchemy.text("INSERT INTO customers (name, address, phone, email)"
+                                           "VALUES (:name, :address, :phone, :email) "
+                                           "RETURNING ID "), parameters = dict(name = new_cart.name,
+                                                                               address = new_cart.address,
+                                                                               phone = new_cart.phone,
+                                                                               email = new_cart.email))
+        cust_id = cust_id.scaler()
+
+        cart_id = connection.execute(sqlalchemy.text("INSERT INTO carts (customer_id)"
+                                           "VALUES (:cust_id) "
+                                           "RETURNING ID "), parameters = dict(cust_id = cust_id))
+        cart_id = cart_id.scaler()
+
+    return {"cart_id": cart_id}
 
 
 @router.get("/{cart_id}")
