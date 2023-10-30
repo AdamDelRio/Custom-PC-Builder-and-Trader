@@ -29,9 +29,9 @@ def create_cart(new_cart: NewCart):
                                                                                phone = new_cart.phone,
                                                                                email = new_cart.email)).scalar()
 
-        cart_id = connection.execute(sqlalchemy.text("INSERT INTO carts (customer_id) "
+        cart_id = connection.execute(sqlalchemy.text("INSERT INTO carts (user_id) "
                                            "VALUES (:cust_id) "
-                                           "RETURNING ID "), parameters = dict(cust_id = cust_id)).scalar()
+                                           "RETURNING cart_id "), parameters = dict(cust_id = cust_id)).scalar()
 
     return {"cart_id": cart_id}
 
@@ -41,7 +41,7 @@ def get_cart(cart_id: int):
     """ """
     with db.engine.begin() as connection:
         cust_name = connection.execute(sqlalchemy.text("SELECT name FROM users WHERE id = :cart_id"),
-        {'cart_id': cart_id})
+        {'cart_id': cart_id}).scalar()
 
     return {cust_name}
 
