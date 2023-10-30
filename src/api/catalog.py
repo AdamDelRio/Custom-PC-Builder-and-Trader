@@ -10,7 +10,7 @@ def get_catalog():
     """
     Each unique item combination must have only a single price.
     """
-    sql = "SELECT part_inventory.name as name, part_inventory.type as type, part_inventory.quantity as quantity, part_inventory.part_id as part_id from part_inventory where quantity > 0"
+    sql = "SELECT part_inventory.price as price, part_inventory.name as name, part_inventory.type as type, part_inventory.quantity as quantity, part_inventory.part_id as part_id from part_inventory where quantity > 0"
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql))
         available_parts = []
