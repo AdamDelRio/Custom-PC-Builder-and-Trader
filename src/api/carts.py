@@ -36,16 +36,6 @@ def create_cart(new_cart: NewCart):
     return {"cart_id": cart_id}
 
 
-@router.get("/{cart_id}")
-def get_cart(cart_id: int):
-    """ """
-    with db.engine.begin() as connection:
-        cust_name = connection.execute(sqlalchemy.text("SELECT name FROM users WHERE id = :cart_id"),
-        {'cart_id': cart_id}).scalar()
-
-    return {cust_name}
-
-
 class CartItem(BaseModel):
     quantity: int
 
