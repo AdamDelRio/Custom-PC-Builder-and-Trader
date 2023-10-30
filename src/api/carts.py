@@ -22,7 +22,7 @@ class NewCart(BaseModel):
 def create_cart(new_cart: NewCart):
     """ """
     with db.engine.begin() as connection:
-        cust_id = connection.execute(sqlalchemy.text("INSERT INTO customers (name, address, phone, email)"
+        cust_id = connection.execute(sqlalchemy.text("INSERT INTO customers (name, address, phone, email) "
                                            "VALUES (:name, :address, :phone, :email) "
                                            "RETURNING ID "), parameters = dict(name = new_cart.name,
                                                                                address = new_cart.address,
@@ -30,7 +30,7 @@ def create_cart(new_cart: NewCart):
                                                                                email = new_cart.email))
         cust_id = cust_id.scaler()
 
-        cart_id = connection.execute(sqlalchemy.text("INSERT INTO carts (customer_id)"
+        cart_id = connection.execute(sqlalchemy.text("INSERT INTO carts (customer_id) "
                                            "VALUES (:cust_id) "
                                            "RETURNING ID "), parameters = dict(cust_id = cust_id))
         cart_id = cart_id.scaler()
