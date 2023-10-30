@@ -17,9 +17,10 @@ app = FastAPI(
     version="0.0.1",
     terms_of_service="http://example.com/terms/",
     contact={
-        "name": "Dillon Murphy",
-        "email": "ddmurphy@calpoly.edu",
+        "name": "Dillon Murphy, Sam Bock, Adam Del Rio, Nick Patrick",
+        "email": "ddmurphy@calpoly.edu, sambock@email.com, adamdelrio@email.com, nickpatrick@email.com",
     },
+
 )
 
 # origins = ["https://potion-exchange.vercel.app"]
