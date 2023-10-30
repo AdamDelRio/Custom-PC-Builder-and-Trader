@@ -21,13 +21,22 @@ class NewCart(BaseModel):
 @router.post("/")
 def create_cart(new_cart: NewCart):
     """ """
-    with db.engine.begin() as connection:
-        cust_id = connection.execute(sqlalchemy.text("INSERT INTO users (name, address, phone, email) "
-                                           "VALUES (:name, :address, :phone, :email) "
-                                           "RETURNING ID "), parameters = dict(name = new_cart.name,
-                                                                               address = new_cart.address,
-                                                                               phone = new_cart.phone,
-                                                                               email = new_cart.email)).scalar()
+    with db.engine.begin() as connection:   
+        cust_id = connection.execute(
+            sqlalchemy.text("SELECT id FROM users WHERE "
+                            "name = :name AND address = :address AND "
+                            "phone = :phone AND email = :email")
+            .params(name=new_cart.name, address=new_cart.address, 
+                    phone=new_cart.phone, email=new_cart.email)
+        ).scalar()
+
+        if not cust_id:
+            cust_id = connection.execute(sqlalchemy.text("INSERT INTO users (name, address, phone, email) "
+                                            "VALUES (:name, :address, :phone, :email) "
+                                            "RETURNING ID "), parameters = dict(name = new_cart.name,
+                                                                                address = new_cart.address,
+                                                                                phone = new_cart.phone,
+                                                                                email = new_cart.email)).scalar()
 
         cart_id = connection.execute(sqlalchemy.text("INSERT INTO carts (user_id) "
                                            "VALUES (:cust_id) "
@@ -43,7 +52,6 @@ class CartItem(BaseModel):
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
-
     return "OK"
 
 
