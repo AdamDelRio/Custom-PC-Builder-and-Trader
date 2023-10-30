@@ -55,12 +55,11 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
 
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, quantity, part_id) " 
-                                        "SELECT :cart_id, :quantity, part_inventory.id "
+                                        "SELECT :cart_id, :quantity, part_inventory.part_id "
                                         "FROM part_inventory WHERE part_inventory.name = :item_name"),
                                         parameters= dict(cart_id = cart_id,
                                                          item_name = item_sku,
                                                          quantity = cart_item.quantity))
-        connection.commit()
 
     return "OK"
 
@@ -71,5 +70,41 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
+    with db.engine.begin() as connection:
+        cart_items = connection.execute(
+            sqlalchemy.text("SELECT cart_items.part_id, cart_items.quantity, part_inventory.price "
+                            "FROM cart_items "
+                            "JOIN part_inventory ON cart_items.part_id = part_inventory.part_id "
+                            "WHERE cart_items.cart_id = :cart_id")
+            .params(cart_id=cart_id)
+        ).fetchall()
 
-    return {"total_potions_bought": 1, "total_gold_paid": 50}
+        total_item_bought = 0
+        total_gold_paid = 0
+        for item in cart_items:
+            connection.execute(
+                sqlalchemy.text("UPDATE part_inventory "
+                                "SET quantity = quantity - :quantity "
+                                "WHERE part_id = :part_id")
+                .params(part_id=item.part_id, quantity=item.quantity)
+            )
+
+            connection.execute(
+                sqlalchemy.text(
+                    "INSERT INTO purchase_history (user_id, part_id, payment) "
+                    "VALUES ((SELECT user_id FROM carts WHERE cart_id = :cart_id), :part_id, :payment)")
+                .params(cart_id=cart_id, part_id=item.part_id, payment=item.price * item.quantity)
+            )
+
+            total_item_bought += item.quantity
+            total_gold_paid += item.price * item.quantity
+
+        connection.execute(
+                sqlalchemy.text("DELETE FROM cart_items WHERE cart_id = :cart_id")
+                .params(cart_id=cart_id)
+            )
+
+    return {
+        "total_potions_bought": total_item_bought,
+        "total_gold_paid": total_gold_paid
+    }
