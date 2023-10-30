@@ -52,6 +52,16 @@ class CartItem(BaseModel):
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
+
+    with db.engine.begin() as connection:
+        connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, quantity, part_id) " 
+                                        "SELECT :cart_id, :quantity, part_inventory.id "
+                                        "FROM part_inventory WHERE part_inventory.name = :item_name"),
+                                        parameters= dict(cart_id = cart_id,
+                                                         item_name = item_sku,
+                                                         quantity = cart_item.quantity))
+        connection.commit()
+
     return "OK"
 
 
