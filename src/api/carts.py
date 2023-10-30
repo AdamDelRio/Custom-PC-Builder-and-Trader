@@ -27,13 +27,11 @@ def create_cart(new_cart: NewCart):
                                            "RETURNING ID "), parameters = dict(name = new_cart.name,
                                                                                address = new_cart.address,
                                                                                phone = new_cart.phone,
-                                                                               email = new_cart.email))
-        cust_id = cust_id.scaler()
+                                                                               email = new_cart.email)).scalar()
 
         cart_id = connection.execute(sqlalchemy.text("INSERT INTO carts (customer_id) "
                                            "VALUES (:cust_id) "
-                                           "RETURNING ID "), parameters = dict(cust_id = cust_id))
-        cart_id = cart_id.scaler()
+                                           "RETURNING ID "), parameters = dict(cust_id = cust_id)).scalar()
 
     return {"cart_id": cart_id}
 
