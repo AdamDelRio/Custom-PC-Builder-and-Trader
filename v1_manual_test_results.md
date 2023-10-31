@@ -17,6 +17,7 @@ curl -X 'GET' \
   -H 'accept: application/json'
 ```
 
+```
 [
   {
     "name": "AMD Ryzen 5 5600X",
@@ -26,4 +27,5 @@ curl -X 'GET' \
     "price": 159.99
   }
 ]
+```
 
