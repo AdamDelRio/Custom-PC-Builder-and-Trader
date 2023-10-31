@@ -1,3 +1,5 @@
+Used data from https://github.com/docyx/pc-part-dataset grabbing from PCPartPicker.com. I used json_to_db.py to insert parts into our dataset. 
+
 # Example workflow
 
 Gerald (who already has an account) wants to buy a new cpu to upgrade his set up. To do this, he:
