@@ -101,6 +101,6 @@ curl -X 'POST' \
 ```
 {
   "total_items_bought": 1,
-  "total_gold_paid": 159.99
+  "total_dollars_paid": 159.99
 }
 ```
