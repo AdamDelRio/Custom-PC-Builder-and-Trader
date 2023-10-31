@@ -80,7 +80,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         ).fetchall()
 
         total_item_bought = 0
-        total_gold_paid = 0
+        total_dollars_paid = 0
         for item in cart_items:
             connection.execute(
                 sqlalchemy.text("UPDATE part_inventory "
@@ -97,7 +97,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             )
 
             total_item_bought += item.quantity
-            total_gold_paid += item.price * item.quantity
+            total_dollars_paid += item.price * item.quantity
 
         connection.execute(
                 sqlalchemy.text("DELETE FROM cart_items WHERE cart_id = :cart_id")
@@ -106,5 +106,5 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
     return {
         "total_items_bought": total_item_bought,
-        "total_gold_paid": total_gold_paid
+        "total_dollars_paid": total_dollars_paid
     }
