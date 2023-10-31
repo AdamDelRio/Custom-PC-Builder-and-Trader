@@ -29,3 +29,23 @@ curl -X 'GET' \
 ]
 ```
 
+
+```
+curl -X 'POST' \
+  'http://127.0.0.1:8000/carts/' \
+  -H 'accept: application/json' \
+  -H 'access_token: c0d0e3ec83aa1d63f1e548125436f0a5' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "name": "Gerald",
+  "address": "1 Grand Ave",
+  "phone": "696-969-6969",
+  "email": "GDawg@yahoo.com"
+}'
+```
+
+```
+{
+  "cart_id": 6
+}
+```
