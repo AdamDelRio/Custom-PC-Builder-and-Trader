@@ -11,7 +11,7 @@ Lastly, he clicks checkout, which calls POST /carts/{cart_id}/checkout to purcha
 
 # Testing results
 
-```
+```curl
 curl -X 'GET' \
   'http://127.0.0.1:8000/catalog/' \
   -H 'accept: application/json'
