@@ -12,7 +12,7 @@ router = APIRouter(
 
 
 class NewCart(BaseModel):
-    user_id: str
+    user_id: int
     name: str
     address:str
     phone:str
