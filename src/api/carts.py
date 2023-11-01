@@ -12,6 +12,7 @@ router = APIRouter(
 
 
 class NewCart(BaseModel):
+    user_id: str
     name: str
     address:str
     phone:str
@@ -23,7 +24,7 @@ def create_cart(new_cart: NewCart):
     """ """
     with db.engine.begin() as connection:   
         cust_id = connection.execute(
-            sqlalchemy.text("SELECT id FROM users WHERE "
+            sqlalchemy.text("SELECT id FROM customers WHERE "
                             "name = :name AND address = :address AND "
                             "phone = :phone AND email = :email")
             .params(name=new_cart.name, address=new_cart.address, 
@@ -31,9 +32,10 @@ def create_cart(new_cart: NewCart):
         ).scalar()
 
         if not cust_id:
-            cust_id = connection.execute(sqlalchemy.text("INSERT INTO users (name, address, phone, email) "
-                                            "VALUES (:name, :address, :phone, :email) "
-                                            "RETURNING ID "), parameters = dict(name = new_cart.name,
+            cust_id = connection.execute(sqlalchemy.text("INSERT INTO customers (user_id, name, address, phone, email) "
+                                            "VALUES (:user_id, :name, :address, :phone, :email) "
+                                            "RETURNING ID "), parameters = dict(user_id = new_cart.id,
+                                                                                name = new_cart.name,
                                                                                 address = new_cart.address,
                                                                                 phone = new_cart.phone,
                                                                                 email = new_cart.email)).scalar()
