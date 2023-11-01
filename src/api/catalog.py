@@ -86,7 +86,7 @@ def add_to_user_catalog(parts: Parts):
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text(
                 "SELECT 1 FROM part_inventory WHERE part_id = :part_id"
-            ), part_id=part_id).fetchone()
+            ).params(part_id=part_id)).fetchone()
             if not result:
                 raise HTTPException(status_code=404, detail=f"Part ID {part_id} not found in inventory")
 
@@ -96,7 +96,7 @@ def add_to_user_catalog(parts: Parts):
                 SELECT quantity FROM user_parts 
                 WHERE user_id = :user_id AND part_id = :part_id
                 """
-            ), user_id=parts.user_id, part_id=part_id).fetchone()
+            ).params(user_id=parts.user_id, part_id=part_id)).fetchone()
 
         if existing_quantity:
             with db.engine.begin() as connection:
@@ -106,7 +106,10 @@ def add_to_user_catalog(parts: Parts):
                     SET quantity = quantity + :quantity, price = :price
                     WHERE user_id = :user_id AND part_id = :part_id
                     """
-                ), user_id=parts.user_id, part_id=part_id, quantity=parts.quantity, price=parts.price)
+                ).params(user_id=parts.user_id, 
+                         part_id=part_id, 
+                         quantity=parts.quantity, 
+                         price=parts.price))
         else:
             with db.engine.begin() as connection:
                 connection.execute(sqlalchemy.text(
@@ -114,6 +117,9 @@ def add_to_user_catalog(parts: Parts):
                     INSERT INTO user_parts (user_id, part_id, quantity, price)
                     VALUES (:user_id, :part_id, :quantity, :price)
                     """
-                ), user_id=parts.user_id, part_id=part_id, quantity=parts.quantity, price=parts.price)
+                ).params(user_id=parts.user_id, 
+                         part_id=part_id, 
+                         quantity=parts.quantity, 
+                         price=parts.price))
 
     return {"status": "success", "message": "Items added/updated in user's catalog"}
