@@ -42,7 +42,7 @@ def get_user_catalog_for_user(user_id: int):
     Fetch the catalog for a specific user based on their user_id.
     Only consider the quantity and price from user_parts, not from part_inventory.
     """
-    
+
     sql = """
     SELECT
         up.price AS price,
@@ -56,7 +56,7 @@ def get_user_catalog_for_user(user_id: int):
     """
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql), user_id=user_id)
+        result = connection.execute(sqlalchemy.text(sql), {"user_id": user_id})  # Pass the user_id as a dictionary
         user_parts = []
         for row in result:
             part_info = {
@@ -73,35 +73,39 @@ def get_user_catalog_for_user(user_id: int):
 
 @router.get("/user_catalog", tags=["catalog"])
 def get_user_catalog():
-    """
-    Fetch the catalog for a specific user based on their user_id.
-    Only consider the quantity and price from user_parts, not from part_inventory.
-    """
-    
-    sql = """
-    SELECT
-        up.price AS price,
-        pi.name AS name,
-        pi.type AS type,
-        up.quantity AS quantity,
-        up.part_id AS part_id
-    FROM user_parts up
-    JOIN part_inventory pi ON up.part_id = pi.part_id
-    """
-
+    user_parts = []
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql), user_id=user_id)
-        user_parts = []
-        for row in result:
-            part_info = {
-                "name": row.name,
-                "type": row.type,
-                "part_id": row.part_id,
-                "quantity": row.quantity,
-                "price": row.price,
-                "user_id": user_id
-            }
-            user_parts.append(part_info)
+        """
+        Fetch the catalog for a specific user based on their user_id.
+        Only consider the quantity and price from user_parts, not from part_inventory.
+        """
+        users = connection.execute(sqlalchemy.text("SELECT id FROM users")).fetchall()
+
+        for row in users:
+            user_id = row.id
+            sql = sqlalchemy.text("""
+                SELECT
+                    up.price AS price,
+                    pi.name AS name,
+                    pi.type AS type,
+                    up.quantity AS quantity,
+                    up.part_id AS part_id
+                FROM user_parts up
+                JOIN part_inventory pi ON up.part_id = pi.part_id
+                WHERE up.user_id = :user_id
+            """)
+            result = connection.execute(sql, {"user_id": user_id})  # Pass the user_id as a dictionary
+
+            for row in result:
+                part_info = {
+                    "name": row.name,
+                    "type": row.type,
+                    "part_id": row.part_id,
+                    "quantity": row.quantity,
+                    "price": row.price,
+                    "user_id": user_id
+                }
+                user_parts.append(part_info)
 
     return user_parts
 
