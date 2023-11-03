@@ -36,7 +36,7 @@ def login(username: str):
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT * FROM users WHERE username = :username RETURNING id"
+                "SELECT * FROM users WHERE username = :username"
             ),
             {"username": username}
         ).fetchone()
