@@ -37,7 +37,7 @@ def get_catalog():
     return available_parts
 
 @router.get("/user_catalog/{user_id}", tags=["catalog"])
-def get_user_catalog(user_id: int):
+def get_user_catalog_for_user(user_id: int):
     """
     Fetch the catalog for a specific user based on their user_id.
     Only consider the quantity and price from user_parts, not from part_inventory.
@@ -72,7 +72,7 @@ def get_user_catalog(user_id: int):
     return user_parts
 
 @router.get("/user_catalog", tags=["catalog"])
-def get_user_catalog(user_id: int):
+def get_user_catalog():
     """
     Fetch the catalog for a specific user based on their user_id.
     Only consider the quantity and price from user_parts, not from part_inventory.
