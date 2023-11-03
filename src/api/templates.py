@@ -26,16 +26,16 @@ class TemplatePart(BaseModel):
 @router.post('{user_id}/{template_id}/items/{part_id}')
 def add_item_to_template(user_id, template_id, part_id, template_part: TemplatePart):
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text("INSERT INTO pc_template_parts (template_id, user_id, part_id, quantity) "
+        connection.execute(statement=sqlalchemy.text("INSERT INTO pc_template_parts (template_id, user_id, part_id, quantity) "
                                            "VALUES (:template_id, :user_id, :part_id, :quantity) "),
-                                           parameters= dict(
-                                               template_id = template_id
-                                               user_id = user_id
-                                               part_id = part_id
-                                               quantity = template_part.quantity
-                                           ))
+                                           parameters= {
+                                               "template_id": template_id,
+                                               "user_id": user_id,
+                                               "part_id" :part_id,
+                                               "quantity" :template_part.quantity
+                                           })
         
 
-@router.post('{template_id}/cart/new')
-def create_cart_from_template(template_id):
+# @router.post('{template_id}/cart/new')
+# def create_cart_from_template(template_id):
     
