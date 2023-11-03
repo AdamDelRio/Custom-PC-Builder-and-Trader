@@ -32,7 +32,7 @@ def create_cart(new_cart: NewCart):
         if not cust_id:
             cust_id = connection.execute(sqlalchemy.text("INSERT INTO customers (user_id, name, address, phone, email) "
                                             "VALUES (:user_id, :name, :address, :phone, :email) "
-                                            "RETURNING ID "), parameters = dict(user_id = new_cart.id,
+                                            "RETURNING id "), parameters = dict(user_id = new_cart.user_id,
                                                                                 name = new_cart.name,
                                                                                 address = new_cart.address,
                                                                                 phone = new_cart.phone,
@@ -55,7 +55,7 @@ def set_item_quantity(cart_id: int, part_id: int, cart_item: CartItem):
 
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, quantity, part_id) " 
-                                        "VALUES :cart_id, :quantity, :part_id "),
+                                        "VALUES (:cart_id, :quantity, :part_id)"),
                                         parameters= dict(cart_id = cart_id,
                                                          part_id = part_id,
                                                          quantity = cart_item.quantity))
