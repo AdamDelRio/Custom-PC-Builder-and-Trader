@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from src.api import auth
 from sqlalchemy.exc import IntegrityError
 from src import database as db
+
 import sqlalchemy
 router = APIRouter(
     prefix="/account",
@@ -24,7 +25,7 @@ def sign_up(username: str, email: str):
             )
         return {"message": "User signed up successfully"}
     except IntegrityError as e:
-        db.engine.rollback()
+        # Make db.engine return an error
         return {"error": "Username or email already taken"}
     
 
