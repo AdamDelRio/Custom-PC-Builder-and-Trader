@@ -42,7 +42,7 @@ def get_user_catalog_for_user(user_id: int):
     Fetch the catalog for a specific user based on their user_id.
     Only consider the quantity and price from user_parts, not from part_inventory.
     """
-    
+
     sql = """
     SELECT
         up.price AS price,
@@ -56,7 +56,7 @@ def get_user_catalog_for_user(user_id: int):
     """
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql), user_id=user_id)
+        result = connection.execute(sqlalchemy.text(sql), {"user_id": user_id})  # Pass the user_id as a dictionary
         user_parts = []
         for row in result:
             part_info = {
@@ -94,7 +94,7 @@ def get_user_catalog():
                 JOIN part_inventory pi ON up.part_id = pi.part_id
                 WHERE up.user_id = :user_id
             """)
-            result = connection.execute(sql, user_id=user_id)
+            result = connection.execute(sql, {"user_id": user_id})  # Pass the user_id as a dictionary
 
             for row in result:
                 part_info = {
