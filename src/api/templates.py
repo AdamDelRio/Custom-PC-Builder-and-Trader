@@ -36,6 +36,6 @@ def add_item_to_template(user_id, template_id, part_id, template_part: TemplateP
                                            })
         
 
-@router.post('{template_id}/cart/new')
-def create_cart_from_template(template_id):
+# @router.post('{template_id}/cart/new')
+# def create_cart_from_template(template_id):
     
