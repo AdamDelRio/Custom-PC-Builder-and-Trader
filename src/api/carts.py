@@ -55,8 +55,7 @@ def set_item_quantity(cart_id: int, part_id: int, cart_item: CartItem):
 
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, quantity, part_id) " 
-                                        "SELECT :cart_id, :quantity, part_inventory.part_id "
-                                        "FROM part_inventory WHERE part_inventory.part_id = :part_id"),
+                                        "VALUES :cart_id, :quantity, :part_id "),
                                         parameters= dict(cart_id = cart_id,
                                                          part_id = part_id,
                                                          quantity = cart_item.quantity))
