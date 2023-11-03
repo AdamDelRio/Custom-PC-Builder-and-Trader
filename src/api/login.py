@@ -4,12 +4,12 @@ from sqlalchemy.exc import IntegrityError
 from src import database as db
 import sqlalchemy
 router = APIRouter(
-    prefix="/login",
-    tags=["login"],
+    prefix="/account",
+    tags=["account"],
     dependencies=[Depends(auth.get_api_key)],
 )
 
-@router.post("/signup/")
+@router.post("/create")
 def sign_up(username: str, email: str):
     """
     Sign up for the site.
@@ -28,7 +28,7 @@ def sign_up(username: str, email: str):
         return {"error": "Username or email already taken"}
     
 
-@router.post("/login/")
+@router.post("/login")
 def login(username: str):
     """
     Log in for the site.

@@ -9,8 +9,6 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
-
-
 class NewCart(BaseModel):
     user_id: int
     name: str
