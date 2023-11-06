@@ -47,6 +47,7 @@ def create_cart(new_cart: NewCart):
 
 class CartItem(BaseModel):
     quantity: int
+    user_item: bool
 
 
 @router.post("/{cart_id}/items/{part_id}")
@@ -54,11 +55,12 @@ def set_item_quantity(cart_id: int, part_id: int, cart_item: CartItem):
     """ """
 
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, quantity, part_id) " 
-                                        "VALUES (:cart_id, :quantity, :part_id)"),
+        connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, quantity, part_id, user_item) " 
+                                        "VALUES (:cart_id, :quantity, :part_id, :user_item)"),
                                         parameters= dict(cart_id = cart_id,
                                                          part_id = part_id,
-                                                         quantity = cart_item.quantity))
+                                                         quantity = cart_item.quantity,
+                                                         user_item = cart_item.user_item))
 
     return "OK"
 
@@ -71,28 +73,41 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     with db.engine.begin() as connection:
         cart_items = connection.execute(
-            sqlalchemy.text("SELECT cart_items.part_id, cart_items.quantity, part_inventory.price "
-                            "FROM cart_items "
-                            "JOIN part_inventory ON cart_items.part_id = part_inventory.part_id "
-                            "WHERE cart_items.cart_id = :cart_id")
+            sqlalchemy.text(
+                "SELECT cart_items.part_id, cart_items.quantity, "
+                "CASE WHEN cart_items.user_item THEN user_parts.price ELSE part_inventory.price END as price, "
+                "cart_items.user_item "
+                "FROM cart_items "
+                "JOIN part_inventory ON cart_items.part_id = part_inventory.part_id "
+                "JOIN user_parts ON cart_items.part_id = user_parts.id"
+                "WHERE cart_items.cart_id = :cart_id")
             .params(cart_id=cart_id)
         ).fetchall()
 
         total_item_bought = 0
         total_dollars_paid = 0
         for item in cart_items:
-            connection.execute(
-                sqlalchemy.text("UPDATE part_inventory "
-                                "SET quantity = quantity - :quantity "
-                                "WHERE part_id = :part_id")
-                .params(part_id=item.part_id, quantity=item.quantity)
-            )
+            if item.user_item:
+                connection.execute(
+                    sqlalchemy.text(
+                        "UPDATE user_parts "
+                        "SET quantity = quantity - :quantity "
+                        "WHERE id = :part_id")
+                    .params(part_id=item.part_id, quantity=item.quantity)
+                )
+            else:
+                connection.execute(
+                    sqlalchemy.text("UPDATE part_inventory "
+                                    "SET quantity = quantity - :quantity "
+                                    "WHERE part_id = :part_id")
+                    .params(part_id=item.part_id, quantity=item.quantity)
+                )
 
             connection.execute(
                 sqlalchemy.text(
-                    "INSERT INTO purchase_history (user_id, part_id, payment) "
-                    "VALUES ((SELECT user_id FROM carts WHERE cart_id = :cart_id), :part_id, :payment)")
-                .params(cart_id=cart_id, part_id=item.part_id, payment=item.price * item.quantity)
+                    "INSERT INTO purchase_history (user_id, part_id, payment, user_item) "
+                    "VALUES ((SELECT user_id FROM carts WHERE cart_id = :cart_id), :part_id, :payment, :user_item)")
+                .params(cart_id=cart_id, part_id=item.part_id, payment=item.price * item.quantity, user_item = item.user_item)
             )
 
             total_item_bought += item.quantity
