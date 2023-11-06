@@ -38,13 +38,13 @@ def add_item_to_template(user_id, template_id, part_id, template_part: TemplateP
 
 @router.post('{template_id}/cart/new')
 def create_cart_from_template(template_id):
-     with db.engine.begin() as connection:
+    with db.engine.begin() as connection:
         cart_id = connection.execute(sqlalchemy.text("INSERT INTO carts (user_id) "
-                                           "SELECT pc_templates.user_id "
-                                           "FROM pc_templates "
-                                           "WHERE pc_templates.id = :template_id "
-                                           "RETURNING cart_id"),
-                                           parameters= dict(template_id = template_id)).scalar()
+                                                     "SELECT pc_templates.user_id "
+                                                     "FROM pc_templates "
+                                                     "WHERE pc_templates.id = :template_id "
+                                                     "RETURNING cart_id"),
+                                                     parameters= dict(template_id = template_id)).scalar()
         connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, part_id, quantity)"
                                            "SELECT :cart_id, pc_template_parts.part_id, pc_template_parts.quantity "
                                            "FROM pc_template_parts "
