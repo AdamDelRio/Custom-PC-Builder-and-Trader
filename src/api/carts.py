@@ -78,15 +78,17 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 "CASE WHEN cart_items.user_item THEN user_parts.price ELSE part_inventory.price END as price, "
                 "cart_items.user_item "
                 "FROM cart_items "
-                "JOIN part_inventory ON cart_items.part_id = part_inventory.part_id "
-                "JOIN user_parts ON cart_items.part_id = user_parts.id"
+                "LEFT JOIN part_inventory ON cart_items.part_id = part_inventory.part_id "
+                "LEFT JOIN user_parts ON cart_items.part_id = user_parts.id "
                 "WHERE cart_items.cart_id = :cart_id")
             .params(cart_id=cart_id)
         ).fetchall()
 
         total_item_bought = 0
         total_dollars_paid = 0
+        print(len(cart_items))
         for item in cart_items:
+            print(item)
             if item.user_item:
                 connection.execute(
                     sqlalchemy.text(
