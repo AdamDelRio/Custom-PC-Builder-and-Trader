@@ -110,6 +110,39 @@ def get_user_catalog():
 
     return user_parts
 
+class SearchPart(BaseModel):
+    name: str
+    type: str
+
+@router.post("/catalog/search", tags=["catalog"])
+def search_catalog(search_part: SearchPart):
+    """
+    Search the catalog for parts that match the name and type.
+    """
+    sql = sqlalchemy.text("""
+        SELECT
+            part_id,
+            name,
+            type,
+            quantity,
+            price
+        FROM part_inventory
+        WHERE name = :name AND type = :type
+    """)
+
+    with db.engine.begin() as connection:
+        result = connection.execute(sql, {"name": search_part.name, "type": search_part.type})
+        result = result.first()
+        part_info = {
+            "name": result.name,
+            "type": result.type,
+            "part_id": result.part_id,
+            "quantity": result.quantity,
+            "price": result.price
+        }
+
+    return part_info
+
 class Parts(BaseModel):
     user_id: int
     part_id: int
