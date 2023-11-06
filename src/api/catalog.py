@@ -94,21 +94,55 @@ def get_user_catalog():
                 JOIN part_inventory pi ON up.part_id = pi.part_id
                 WHERE up.user_id = :user_id
             """)
-            result = connection.execute(sql, {"user_id": user_id})  # Pass the user_id as a dictionary
+            result = connection.execute(sql, {"user_id": user_id})
 
             for row in result:
-                part_info = {
-                    "id": row.id,
-                    "name": row.name,
-                    "type": row.type,
-                    "part_id": row.part_id,
-                    "quantity": row.quantity,
-                    "price": row.price,
-                    "user_id": user_id
-                }
-                user_parts.append(part_info)
+                if row.quantity > 0:
+                    part_info = {
+                        "id": row.id,
+                        "name": row.name,
+                        "type": row.type,
+                        "part_id": row.part_id,
+                        "quantity": row.quantity,
+                        "price": row.price,
+                        "user_id": user_id
+                    }
+                    user_parts.append(part_info)
 
     return user_parts
+
+class SearchPart(BaseModel):
+    name: str
+    type: str
+
+@router.post("/catalog/search", tags=["catalog"])
+def search_catalog(search_part: SearchPart):
+    """
+    Search the catalog for parts that match the name and type.
+    """
+    sql = sqlalchemy.text("""
+        SELECT
+            part_id,
+            name,
+            type,
+            quantity,
+            price
+        FROM part_inventory
+        WHERE name = :name AND type = :type
+    """)
+
+    with db.engine.begin() as connection:
+        result = connection.execute(sql, {"name": search_part.name, "type": search_part.type})
+        result = result.first()
+        part_info = {
+            "name": result.name,
+            "type": result.type,
+            "part_id": result.part_id,
+            "quantity": result.quantity,
+            "price": result.price
+        }
+
+    return part_info
 
 class Parts(BaseModel):
     user_id: int
