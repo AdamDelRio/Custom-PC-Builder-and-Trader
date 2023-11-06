@@ -21,7 +21,7 @@ def create_template(new_template:NewTemplate):
         temp_id = connection.execute(sqlalchemy.text("INSERT INTO PC_TEMPLATES (user_id) "
                                                      "VALUES (:user_id) "
                                                      "RETURNING id"),
-                                                     parameters= {"user_id": new_template.user_id}).scalar()
+                                                     parameters= {"user_id": int(new_template.user_id)}).scalar()
         
         return temp_id
     
@@ -29,7 +29,7 @@ class TemplatePart(BaseModel):
     quantity:int
     user_item : bool
 
-@router.post('{user_id}/{template_id}/items/{part_id}')
+@router.post('/{user_id}/{template_id}/items/{part_id}')
 def add_item_to_template(user_id, template_id, part_id, template_part: TemplatePart):
     with db.engine.begin() as connection:
         connection.execute(statement=sqlalchemy.text("INSERT INTO pc_template_parts (template_id, user_id, part_id, quantity, user_part) "
@@ -44,7 +44,7 @@ def add_item_to_template(user_id, template_id, part_id, template_part: TemplateP
     return "OK"
         
 
-@router.post('{template_id}/cart/new')
+@router.post('/{template_id}/cart/new')
 def create_cart_from_template(template_id):
     with db.engine.begin() as connection:
         cart_id = connection.execute(sqlalchemy.text("INSERT INTO carts (user_id) "
