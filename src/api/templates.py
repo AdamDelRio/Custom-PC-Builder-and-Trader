@@ -1,9 +1,14 @@
 import sqlalchemy
+from fastapi import APIRouter, Depends
+from src.api import auth
 from pydantic import BaseModel
 from src import database as db
 from fastapi import APIRouter
-
-router = APIRouter()
+router = APIRouter(
+    prefix="/templates",
+    tags=["templates"],
+    dependencies=[Depends(auth.get_api_key)],
+)
 
 class NewTemplate(BaseModel):
     user_id:int
@@ -14,9 +19,9 @@ class NewTemplate(BaseModel):
 def create_template(new_template:NewTemplate):
     with db.engine.begin() as connection:
         temp_id = connection.execute(sqlalchemy.text("INSERT INTO PC_TEMPLATES (user_id) "
-                                                     "VALUES :user_id "
+                                                     "VALUES (:user_id) "
                                                      "RETURNING id"),
-                                                     parameters= dict(user_id = new_template.user_id)).scalar()
+                                                     parameters= {"user_id": new_template.user_id}).scalar()
         
         return temp_id
     
