@@ -47,4 +47,5 @@ def login(username: str):
         if result is None:
             return {"message": "Invalid username"}
         else:
-            return {"message": "Login successful"}
+            return {"message": "Login successful",
+                    "id":result[0]}
