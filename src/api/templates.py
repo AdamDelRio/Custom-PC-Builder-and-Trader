@@ -27,7 +27,7 @@ def create_template(new_template:NewTemplate):
     
 class TemplatePart(BaseModel):
     quantity:int
-    user_item = bool
+    user_item : bool
 
 @router.post('/{user_id}/{template_id}/items/{part_id}')
 def add_item_to_template(user_id, template_id, part_id, template_part: TemplatePart):
@@ -41,6 +41,7 @@ def add_item_to_template(user_id, template_id, part_id, template_part: TemplateP
                                                "quantity" :template_part.quantity,
                                                "user_part": template_part.user_item
                                            })
+    return "OK"
         
 
 @router.post('/{template_id}/cart/new')
