@@ -112,7 +112,7 @@ def get_user_catalog():
 
 class Parts(BaseModel):
     user_id: int
-    part_ids: int
+    part_id: int
     quantity: int
     price: int
 
