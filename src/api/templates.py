@@ -22,17 +22,19 @@ def create_template(new_template:NewTemplate):
     
 class TemplatePart(BaseModel):
     quantity:int
+    user_item = bool
 
 @router.post('{user_id}/{template_id}/items/{part_id}')
 def add_item_to_template(user_id, template_id, part_id, template_part: TemplatePart):
     with db.engine.begin() as connection:
-        connection.execute(statement=sqlalchemy.text("INSERT INTO pc_template_parts (template_id, user_id, part_id, quantity) "
-                                           "VALUES (:template_id, :user_id, :part_id, :quantity) "),
+        connection.execute(statement=sqlalchemy.text("INSERT INTO pc_template_parts (template_id, user_id, part_id, quantity, user_part) "
+                                           "VALUES (:template_id, :user_id, :part_id, :quantity, :user_part) "),
                                            parameters= {
                                                "template_id": template_id,
                                                "user_id": user_id,
                                                "part_id" :part_id,
-                                               "quantity" :template_part.quantity
+                                               "quantity" :template_part.quantity,
+                                               "user_part": template_part.user_item
                                            })
         
 
@@ -45,9 +47,9 @@ def create_cart_from_template(template_id):
                                                      "WHERE pc_templates.id = :template_id "
                                                      "RETURNING cart_id"),
                                                      parameters= dict(template_id = template_id)).scalar()
-        connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, part_id, quantity)"
-                                           "SELECT :cart_id, pc_template_parts.part_id, pc_template_parts.quantity "
+        connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, part_id, quantity, user_part)"
+                                           "SELECT :cart_id, pc_template_parts.part_id, pc_template_parts.quantity, pc_template_part.user_part "
                                            "FROM pc_template_parts "
-                                           "WHERE pc_template_oartss.template_id = :template_id "),\
+                                           "WHERE pc_template_parts.template_id = :template_id "),\
                                             parameters= dict(cart_id = cart_id,
                                                              template_id = template_id))
