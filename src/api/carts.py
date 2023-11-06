@@ -86,9 +86,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
         total_item_bought = 0
         total_dollars_paid = 0
-        print(len(cart_items))
         for item in cart_items:
-            print(item)
             if item.user_item:
                 connection.execute(
                     sqlalchemy.text(
