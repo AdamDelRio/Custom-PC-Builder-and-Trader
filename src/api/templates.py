@@ -1,9 +1,14 @@
 import sqlalchemy
+from fastapi import APIRouter, Depends
+from src.api import auth
 from pydantic import BaseModel
 from src import database as db
 from fastapi import APIRouter
-
-router = APIRouter()
+router = APIRouter(
+    prefix="/templates",
+    tags=["templates"],
+    dependencies=[Depends(auth.get_api_key)],
+)
 
 class NewTemplate(BaseModel):
     user_id:int
