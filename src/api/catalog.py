@@ -26,7 +26,6 @@ def get_catalog():
                 "part_id":part.part_id,
                 "quantity": part.quantity,
                 "price": part.price,
-
             }
             available_parts.append(potion_info)
 
@@ -85,6 +84,7 @@ def get_user_catalog():
             user_id = row.id
             sql = sqlalchemy.text("""
                 SELECT
+                    up.id AS id,
                     up.price AS price,
                     pi.name AS name,
                     pi.type AS type,
@@ -98,6 +98,7 @@ def get_user_catalog():
 
             for row in result:
                 part_info = {
+                    "id": row.id,
                     "name": row.name,
                     "type": row.type,
                     "part_id": row.part_id,
