@@ -94,19 +94,20 @@ def get_user_catalog():
                 JOIN part_inventory pi ON up.part_id = pi.part_id
                 WHERE up.user_id = :user_id
             """)
-            result = connection.execute(sql, {"user_id": user_id})  # Pass the user_id as a dictionary
+            result = connection.execute(sql, {"user_id": user_id})
 
             for row in result:
-                part_info = {
-                    "id": row.id,
-                    "name": row.name,
-                    "type": row.type,
-                    "part_id": row.part_id,
-                    "quantity": row.quantity,
-                    "price": row.price,
-                    "user_id": user_id
-                }
-                user_parts.append(part_info)
+                if row.quantity > 0:
+                    part_info = {
+                        "id": row.id,
+                        "name": row.name,
+                        "type": row.type,
+                        "part_id": row.part_id,
+                        "quantity": row.quantity,
+                        "price": row.price,
+                        "user_id": user_id
+                    }
+                    user_parts.append(part_info)
 
     return user_parts
 

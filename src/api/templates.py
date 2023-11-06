@@ -56,6 +56,6 @@ def create_cart_from_template(template_id):
         connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, part_id, quantity, user_part)"
                                            "SELECT :cart_id, pc_template_parts.part_id, pc_template_parts.quantity, pc_template_part.user_part "
                                            "FROM pc_template_parts "
-                                           "WHERE pc_template_parts.template_id = :template_id "),\
+                                           "WHERE pc_template_parts.template_id = :template_id "),
                                             parameters= dict(cart_id = cart_id,
                                                              template_id = template_id))
