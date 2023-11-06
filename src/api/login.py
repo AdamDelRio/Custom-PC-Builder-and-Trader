@@ -17,13 +17,15 @@ def sign_up(username: str, email: str):
     """
     try:
         with db.engine.begin() as connection:
-            connection.execute(
+            id = connection.execute(
                 sqlalchemy.text(
                     "INSERT INTO users (username, email) VALUES (:username, :email) RETURNING id"
                 ),
                 {"username": username, "email": email}
             )
-        return {"message": "User signed up successfully"}
+            id = id.first()[0]
+        return {"message": "User signed up successfully",
+                "id":id}
     except IntegrityError as e:
         # Make db.engine return an error
         return {"error": "Username or email already taken"}
