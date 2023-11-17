@@ -52,7 +52,9 @@ class CartItem(BaseModel):
 
 @router.post("/{cart_id}/items/{part_id}")
 def set_item_quantity(cart_id: int, part_id: int, cart_item: CartItem):
-    """ """
+    """
+    For a user_item, make sure to use the id instead of the part_id
+    """
 
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, quantity, part_id, user_item) " 
