@@ -33,10 +33,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(login.router)
 app.include_router(carts.router)
 app.include_router(catalog.router)
 app.include_router(templates.router)
-app.include_router(login.router)
 
 @app.exception_handler(exceptions.RequestValidationError)
 @app.exception_handler(ValidationError)
