@@ -74,13 +74,25 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     with db.engine.begin() as connection:
         cart_items = connection.execute(
             sqlalchemy.text(
-                "SELECT cart_items.part_id, cart_items.quantity, "
-                "CASE WHEN cart_items.user_item THEN user_parts.price ELSE part_inventory.price END as price, "
-                "cart_items.user_item "
-                "FROM cart_items "
-                "LEFT JOIN part_inventory ON cart_items.part_id = part_inventory.part_id "
-                "LEFT JOIN user_parts ON cart_items.part_id = user_parts.id "
-                "WHERE cart_items.cart_id = :cart_id")
+                """
+                SELECT
+                    cart_items.part_id,
+                    cart_items.quantity,
+                    CASE
+                        WHEN cart_items.user_item THEN user_parts.dollars + user_parts.cents / 100.0
+                        ELSE part_inventory.dollars + part_inventory.cents / 100.0
+                    END as price,
+                    cart_items.user_item
+                FROM
+                    cart_items
+                LEFT JOIN
+                    part_inventory ON cart_items.part_id = part_inventory.part_id
+                LEFT JOIN
+                    user_parts ON cart_items.part_id = user_parts.id
+                WHERE
+                    cart_items.cart_id = :cart_id
+                 """
+                )
             .params(cart_id=cart_id)
         ).fetchall()
 

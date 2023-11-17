@@ -13,7 +13,17 @@ def get_catalog():
     """
     Each unique item combination must have only a single price.
     """
-    sql = "SELECT part_inventory.price as price, part_inventory.name as name, part_inventory.type as type, part_inventory.quantity as quantity, part_inventory.part_id as part_id from part_inventory where quantity > 0"
+    sql = """SELECT
+                part_inventory.dollars + part_inventory.cents / 100.0 AS price,
+                part_inventory.name,
+                part_inventory.type,
+                part_inventory.quantity,
+                part_inventory.part_id
+            FROM
+                part_inventory
+            WHERE
+                part_inventory.quantity > 0"""
+
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql))
         available_parts = []
@@ -44,7 +54,7 @@ def get_user_catalog_for_user(user_id: int):
 
     sql = """
     SELECT
-        up.price AS price,
+        up.dollars + up.cents / 100.0 AS price,
         pi.name AS name,
         pi.type AS type,
         up.quantity AS quantity,
@@ -85,7 +95,7 @@ def get_user_catalog():
             sql = sqlalchemy.text("""
                 SELECT
                     up.id AS id,
-                    up.price AS price,
+                    up.dollars + up.cents / 100.0 AS price,
                     pi.name AS name,
                     pi.type AS type,
                     up.quantity AS quantity,
@@ -126,7 +136,7 @@ def search_catalog(search_part: SearchPart):
             name,
             type,
             quantity,
-            price
+            dollars + cents / 100.0 AS price
         FROM part_inventory
         WHERE name = :name AND type = :type
     """)
