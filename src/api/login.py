@@ -32,20 +32,19 @@ def sign_up(username: str, email: str):
     
 
 @router.post("/login")
-def login(username: str):
+def login(identifier: str):
     """
-    Log in for the site.
+    Log in for the site using either username or email.
     """
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT * FROM users WHERE username = :username"
+                "SELECT * FROM users WHERE username = :identifier OR email = :identifier"
             ),
-            {"username": username}
+            {"identifier": identifier}
         ).fetchone()
 
         if result is None:
-            return {"message": "Invalid username"}
+            return {"message": "Invalid username or email"}
         else:
-            return {"message": "Login successful",
-                    "id":result[0]}
+            return {"message": "Login successful", "id": result[0]}
