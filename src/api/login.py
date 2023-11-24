@@ -17,6 +17,7 @@ def sign_up(username: str, email: str):
     """
     try:
         with db.engine.begin() as connection:
+            
             id = connection.execute(
                 sqlalchemy.text(
                     "INSERT INTO users (username, email) VALUES (:username, :email) RETURNING id"
