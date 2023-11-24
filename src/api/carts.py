@@ -135,7 +135,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             .params(cart_id=cart_id)
         )
 
-    return {
-        "total_items_bought": total_item_bought,
-        "total_dollars_paid": total_dollars_paid
-    }
+        return {
+            "total_items_bought": total_item_bought,
+            "total_dollars_paid": total_dollars_paid
+        }
