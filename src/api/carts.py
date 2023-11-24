@@ -94,7 +94,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 LEFT JOIN
                     user_parts ON cart_items.part_id = user_parts.id
                 WHERE
-                    cart_items.cart_id = :cart_id
+                    cart_items.cart_id = :cart_id AND
+                    cart_items.checked_out = false
                  """
                 )
             .params(cart_id=cart_id)
@@ -130,9 +131,9 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             total_dollars_paid += item.price * item.quantity
 
         connection.execute(
-                sqlalchemy.text("DELETE FROM cart_items WHERE cart_id = :cart_id")
-                .params(cart_id=cart_id)
-            )
+            sqlalchemy.text("UPDATE cart_items SET checked_out = true WHERE cart_id = :cart_id")
+            .params(cart_id=cart_id)
+        )
 
     return {
         "total_items_bought": total_item_bought,
