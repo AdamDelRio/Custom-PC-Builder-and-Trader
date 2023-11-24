@@ -28,16 +28,16 @@ def get_catalog():
         result = connection.execute(sqlalchemy.text(sql))
         available_parts = []
         parts = result.all()
-    for part in parts:
-            potion_info = {
-                
-                "name": part.name,
-                "type":part.type,
-                "part_id":part.part_id,
-                "quantity": part.quantity,
-                "price": part.price,
-            }
-            available_parts.append(potion_info)
+        for part in parts:
+                potion_info = {
+                    
+                    "name": part.name,
+                    "type":part.type,
+                    "part_id":part.part_id,
+                    "quantity": part.quantity,
+                    "price": part.price,
+                }
+                available_parts.append(potion_info)
 
 
     #TODO: return max of 20 items. 
