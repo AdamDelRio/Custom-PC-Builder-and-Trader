@@ -28,16 +28,16 @@ def get_catalog():
         result = connection.execute(sqlalchemy.text(sql))
         available_parts = []
         parts = result.all()
-    for part in parts:
-            potion_info = {
-                
-                "name": part.name,
-                "type":part.type,
-                "part_id":part.part_id,
-                "quantity": part.quantity,
-                "price": part.price,
-            }
-            available_parts.append(potion_info)
+        for part in parts:
+                potion_info = {
+                    
+                    "name": part.name,
+                    "type":part.type,
+                    "part_id":part.part_id,
+                    "quantity": part.quantity,
+                    "price": part.price,
+                }
+                available_parts.append(potion_info)
 
 
     #TODO: return max of 20 items. 
@@ -165,43 +165,44 @@ def add_to_user_catalog(parts: Parts):
     """
     Allow a user to add items to their catalog.
     """
-    with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(
-            "SELECT 1 FROM part_inventory WHERE part_id = :part_id"
-        ).params(part_id=parts.part_id)).fetchone()
-        if not result:
-            raise HTTPException(status_code=404, detail=f"Part ID {parts.part_id} not found in inventory")
-
-    with db.engine.begin() as connection:
-        existing_quantity = connection.execute(sqlalchemy.text(
-            """
-            SELECT quantity FROM user_parts 
-            WHERE user_id = :user_id AND part_id = :part_id
-            """
-        ).params(user_id=parts.user_id, part_id=parts.part_id)).fetchone()
-
-    if existing_quantity:
+    try:
         with db.engine.begin() as connection:
-            connection.execute(sqlalchemy.text(
+            result = connection.execute(sqlalchemy.text(
+                "SELECT 1 FROM part_inventory WHERE part_id = :part_id"
+            ).params(part_id=parts.part_id)).fetchone()
+
+            if not result:
+                raise HTTPException(status_code=404, detail=f"Part ID {parts.part_id} not found in inventory")
+
+            existing_quantity = connection.execute(sqlalchemy.text(
                 """
-                UPDATE user_parts 
-                SET quantity = quantity + :quantity, price = :price
+                SELECT quantity FROM user_parts 
                 WHERE user_id = :user_id AND part_id = :part_id
                 """
-            ).params(user_id=parts.user_id, 
-                        part_id=parts.part_id, 
-                        quantity=parts.quantity, 
-                        price=parts.price))
-    else:
-        with db.engine.begin() as connection:
-            connection.execute(sqlalchemy.text(
-                """
-                INSERT INTO user_parts (user_id, part_id, quantity, price)
-                VALUES (:user_id, :part_id, :quantity, :price)
-                """
-            ).params(user_id=parts.user_id, 
-                        part_id=parts.part_id, 
-                        quantity=parts.quantity, 
-                        price=parts.price))
+            ).params(user_id=parts.user_id, part_id=parts.part_id)).fetchone()
 
-    return {"status": "success", "message": "Items added/updated in user's catalog"}
+            if existing_quantity:
+                connection.execute(sqlalchemy.text(
+                    """
+                    UPDATE user_parts 
+                    SET quantity = quantity + :quantity, price = :price
+                    WHERE user_id = :user_id AND part_id = :part_id
+                    """
+                ).params(user_id=parts.user_id, 
+                            part_id=parts.part_id, 
+                            quantity=parts.quantity, 
+                            price=parts.price))
+            else:
+                connection.execute(sqlalchemy.text(
+                    """
+                    INSERT INTO user_parts (user_id, part_id, quantity, price)
+                    VALUES (:user_id, :part_id, :quantity, :price)
+                    """
+                ).params(user_id=parts.user_id, 
+                            part_id=parts.part_id, 
+                            quantity=parts.quantity, 
+                            price=parts.price))
+
+            return {"status": "success", "message": "Items added/updated in user's catalog"}
+    except Exception as e:
+        return {"status": "error", "message": "An error occurred: " + str(e)}
