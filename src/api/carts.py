@@ -57,14 +57,26 @@ def set_item_quantity(cart_id: int, part_id: int, cart_item: CartItem):
     """
 
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, quantity, part_id, user_item) " 
-                                        "VALUES (:cart_id, :quantity, :part_id, :user_item)"),
-                                        parameters= dict(cart_id = cart_id,
-                                                         part_id = part_id,
-                                                         quantity = cart_item.quantity,
-                                                         user_item = cart_item.user_item))
+        inventory_table = "user_parts" if cart_item.user_item else "part_inventory"
+        inventory_id_column = "id" if cart_item.user_item else "part_id"
 
-        return "OK"
+        inventory_item = connection.execute(
+            sqlalchemy.text(
+                f"SELECT quantity FROM {inventory_table} WHERE {inventory_id_column} = :part_id"
+            ).params(part_id=part_id)
+        ).fetchone()
+
+        if inventory_item and inventory_item.quantity >= cart_item.quantity:
+            connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, quantity, part_id, user_item) " 
+                                            "VALUES (:cart_id, :quantity, :part_id, :user_item)"),
+                                            parameters= dict(cart_id = cart_id,
+                                                            part_id = part_id,
+                                                            quantity = cart_item.quantity,
+                                                            user_item = cart_item.user_item))
+
+            return "OK"
+        else:
+            return "Item not found or insufficient quantity"
 
 
 class CartCheckout(BaseModel):
