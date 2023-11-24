@@ -64,7 +64,7 @@ def set_item_quantity(cart_id: int, part_id: int, cart_item: CartItem):
                                                          quantity = cart_item.quantity,
                                                          user_item = cart_item.user_item))
 
-    return "OK"
+        return "OK"
 
 
 class CartCheckout(BaseModel):
