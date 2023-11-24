@@ -4,7 +4,6 @@ from src import database as db
 from fastapi import APIRouter
 from fastapi import HTTPException
 from typing import List
-from sqlalchemy.exc import SQLAlchemyError
 
 router = APIRouter()
 
@@ -166,41 +165,44 @@ def add_to_user_catalog(parts: Parts):
     """
     Allow a user to add items to their catalog.
     """
-    with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(
-            "SELECT 1 FROM part_inventory WHERE part_id = :part_id"
-        ).params(part_id=parts.part_id)).fetchone()
+    try:
+        with db.engine.begin() as connection:
+            result = connection.execute(sqlalchemy.text(
+                "SELECT 1 FROM part_inventory WHERE part_id = :part_id"
+            ).params(part_id=parts.part_id)).fetchone()
 
-        if not result:
-            raise HTTPException(status_code=404, detail=f"Part ID {parts.part_id} not found in inventory")
+            if not result:
+                raise HTTPException(status_code=404, detail=f"Part ID {parts.part_id} not found in inventory")
 
-        existing_quantity = connection.execute(sqlalchemy.text(
-            """
-            SELECT quantity FROM user_parts 
-            WHERE user_id = :user_id AND part_id = :part_id
-            """
-        ).params(user_id=parts.user_id, part_id=parts.part_id)).fetchone()
-
-        if existing_quantity:
-            connection.execute(sqlalchemy.text(
+            existing_quantity = connection.execute(sqlalchemy.text(
                 """
-                UPDATE user_parts 
-                SET quantity = quantity + :quantity, price = :price
+                SELECT quantity FROM user_parts 
                 WHERE user_id = :user_id AND part_id = :part_id
                 """
-            ).params(user_id=parts.user_id, 
-                        part_id=parts.part_id, 
-                        quantity=parts.quantity, 
-                        price=parts.price))
-        else:
-            connection.execute(sqlalchemy.text(
-                """
-                INSERT INTO user_parts (user_id, part_id, quantity, price)
-                VALUES (:user_id, :part_id, :quantity, :price)
-                """
-            ).params(user_id=parts.user_id, 
-                        part_id=parts.part_id, 
-                        quantity=parts.quantity, 
-                        price=parts.price))
+            ).params(user_id=parts.user_id, part_id=parts.part_id)).fetchone()
 
-        return {"status": "success", "message": "Items added/updated in user's catalog"}
+            if existing_quantity:
+                connection.execute(sqlalchemy.text(
+                    """
+                    UPDATE user_parts 
+                    SET quantity = quantity + :quantity, price = :price
+                    WHERE user_id = :user_id AND part_id = :part_id
+                    """
+                ).params(user_id=parts.user_id, 
+                            part_id=parts.part_id, 
+                            quantity=parts.quantity, 
+                            price=parts.price))
+            else:
+                connection.execute(sqlalchemy.text(
+                    """
+                    INSERT INTO user_parts (user_id, part_id, quantity, price)
+                    VALUES (:user_id, :part_id, :quantity, :price)
+                    """
+                ).params(user_id=parts.user_id, 
+                            part_id=parts.part_id, 
+                            quantity=parts.quantity, 
+                            price=parts.price))
+
+            return {"status": "success", "message": "Items added/updated in user's catalog"}
+    except Exception as e:
+        return {"status": "error", "message": "An error occurred: " + str(e)}
