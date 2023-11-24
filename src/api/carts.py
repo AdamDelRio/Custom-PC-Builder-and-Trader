@@ -14,7 +14,6 @@ class NewCart(BaseModel):
     name: str
     address:str
     phone:str
-    email:str
 
 
 @router.post("/")
@@ -24,19 +23,18 @@ def create_cart(new_cart: NewCart):
         cust_id = connection.execute(
             sqlalchemy.text("SELECT id FROM customers WHERE "
                             "name = :name AND address = :address AND "
-                            "phone = :phone AND email = :email")
+                            "phone = :phone")
             .params(name=new_cart.name, address=new_cart.address, 
-                    phone=new_cart.phone, email=new_cart.email)
+                    phone=new_cart.phone)
         ).scalar()
 
         if not cust_id:
-            cust_id = connection.execute(sqlalchemy.text("INSERT INTO customers (user_id, name, address, phone, email) "
-                                            "VALUES (:user_id, :name, :address, :phone, :email) "
+            cust_id = connection.execute(sqlalchemy.text("INSERT INTO customers (user_id, name, address, phone) "
+                                            "VALUES (:user_id, :name, :address, :phone) "
                                             "RETURNING id "), parameters = dict(user_id = new_cart.user_id,
                                                                                 name = new_cart.name,
                                                                                 address = new_cart.address,
-                                                                                phone = new_cart.phone,
-                                                                                email = new_cart.email)).scalar()
+                                                                                phone = new_cart.phone)).scalar()
 
         cart_id = connection.execute(sqlalchemy.text("INSERT INTO carts (user_id) "
                                            "VALUES (:cust_id) "
