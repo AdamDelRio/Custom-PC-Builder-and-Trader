@@ -32,7 +32,7 @@ class TemplatePart(BaseModel):
 @router.post('/{user_id}/{template_id}/items/{part_id}')
 def add_item_to_template(user_id, template_id, part_id, template_part: TemplatePart):
     with db.engine.begin() as connection:
-        connection.execute(statement=sqlalchemy.text("INSERT INTO pc_template_parts (template_id, user_id, part_id, quantity, user_part) "
+        temp_part_id = connection.execute(statement=sqlalchemy.text("INSERT INTO pc_template_parts (template_id, user_id, part_id, quantity, user_part) "
                                            "VALUES (:template_id, :user_id, :part_id, :quantity, :user_part) "),
                                            parameters= {
                                                "template_id": template_id,
@@ -41,7 +41,7 @@ def add_item_to_template(user_id, template_id, part_id, template_part: TemplateP
                                                "quantity" :template_part.quantity,
                                                "user_part": template_part.user_item
                                            })
-        return "OK"
+        return temp_part_id
         
 class NewCart(BaseModel):
     user_id: int
