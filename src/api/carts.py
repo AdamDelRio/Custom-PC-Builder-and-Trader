@@ -79,11 +79,9 @@ def set_item_quantity(cart_id: int, part_id: int, cart_item: CartItem):
             return "Item not found or insufficient quantity"
 
 
-class CartCheckout(BaseModel):
-    payment: str
 
 @router.post("/{cart_id}/checkout")
-def checkout(cart_id: int, cart_checkout: CartCheckout):
+def checkout(cart_id: int):
     """ """
     with db.engine.begin() as connection:
         cart_items = connection.execute(
