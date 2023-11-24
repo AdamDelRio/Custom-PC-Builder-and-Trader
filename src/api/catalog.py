@@ -4,6 +4,7 @@ from src import database as db
 from fastapi import APIRouter
 from fastapi import HTTPException
 from typing import List
+from sqlalchemy.exc import SQLAlchemyError
 
 router = APIRouter()
 
@@ -169,10 +170,10 @@ def add_to_user_catalog(parts: Parts):
         result = connection.execute(sqlalchemy.text(
             "SELECT 1 FROM part_inventory WHERE part_id = :part_id"
         ).params(part_id=parts.part_id)).fetchone()
+
         if not result:
             raise HTTPException(status_code=404, detail=f"Part ID {parts.part_id} not found in inventory")
 
-    with db.engine.begin() as connection:
         existing_quantity = connection.execute(sqlalchemy.text(
             """
             SELECT quantity FROM user_parts 
@@ -180,8 +181,7 @@ def add_to_user_catalog(parts: Parts):
             """
         ).params(user_id=parts.user_id, part_id=parts.part_id)).fetchone()
 
-    if existing_quantity:
-        with db.engine.begin() as connection:
+        if existing_quantity:
             connection.execute(sqlalchemy.text(
                 """
                 UPDATE user_parts 
@@ -192,8 +192,7 @@ def add_to_user_catalog(parts: Parts):
                         part_id=parts.part_id, 
                         quantity=parts.quantity, 
                         price=parts.price))
-    else:
-        with db.engine.begin() as connection:
+        else:
             connection.execute(sqlalchemy.text(
                 """
                 INSERT INTO user_parts (user_id, part_id, quantity, price)
@@ -204,4 +203,4 @@ def add_to_user_catalog(parts: Parts):
                         quantity=parts.quantity, 
                         price=parts.price))
 
-    return {"status": "success", "message": "Items added/updated in user's catalog"}
+        return {"status": "success", "message": "Items added/updated in user's catalog"}
