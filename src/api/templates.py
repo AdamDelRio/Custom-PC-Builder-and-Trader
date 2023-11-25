@@ -58,6 +58,7 @@ def remove_item_from_template(template_id, part_id):
         connection.execute(sqlalchemy.text("DELETE FROM pc_template_parts WHERE template_id = :template_id and part_id = :part_id"), 
                            parameters= {"template_id":template_id,
                                         "part_id":part_id}
+    
     return "item removed from template"
                                                                                                                                                   })
 
