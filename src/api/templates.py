@@ -49,6 +49,19 @@ def add_item_to_template(user_id, template_id, part_id, template_part: TemplateP
                                            })
         return temp_part_id
         
+@router.post('/{template_id}/remove/items/{part_id}')
+def remove_item_from_template(template_id, part_id):
+    """
+    Remove a specific item from a template
+    """
+    with db.engine.begin() as connection:
+        connection.execute(sqlalchemy.text("DELETE FROM pc_template_parts WHERE template_id = :template_id and part_id = :part_id"), 
+                           parameters= {"template_id":template_id,
+                                        "part_id":part_id}
+    return "item removed from template"
+                                                                                                                                                  })
+
+
 class NewCart(BaseModel):
     user_id: int
     name: str
