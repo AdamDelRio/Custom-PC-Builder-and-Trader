@@ -3,6 +3,7 @@ import sqlalchemy
 from src import database as db
 from fastapi import APIRouter
 from fastapi import HTTPException
+from fastapi import Query
 from typing import List
 
 router = APIRouter()
@@ -82,12 +83,12 @@ def get_user_catalog_for_user(user_id: int):
 
 @router.get("/user_catalog", tags=["catalog"])
 def get_user_catalog():
-    user_parts = []
     with db.engine.begin() as connection:
         """
         Fetch the catalog for a specific user based on their user_id.
         Only consider the quantity and price from user_parts, not from part_inventory.
         """
+        user_parts = []
         users = connection.execute(sqlalchemy.text("SELECT id FROM users")).fetchall()
 
         for row in users:
@@ -119,43 +120,180 @@ def get_user_catalog():
                     }
                     user_parts.append(part_info)
 
-    return user_parts
+        return user_parts
 
 class SearchPart(BaseModel):
     name: str
-    type: str
 
 @router.post("/catalog/search", tags=["catalog"])
-def search_catalog(search_part: SearchPart):
-    """
-    Search the catalog for parts that match the name and type.
-    """
-    sql = sqlalchemy.text("""
-        SELECT
-            part_id,
-            name,
-            type,
-            quantity,
-            dollars + cents / 100.0 AS price
-        FROM part_inventory
-        WHERE name = :name AND type = :type
-    """)
-
+def search_catalog(
+    search_part: SearchPart,
+    part_type: str = Query(None, title="Part Type", description="Filter by part type", regex="^(case|cpu|monitor|motherboard|power_supply|video_card|internal_hard_drive)$"),
+    search_page: int = 1,
+):
     with db.engine.begin() as connection:
-        result = connection.execute(sql, {"name": search_part.name, "type": search_part.type})
-        result = result.first()
-        if result is not None:
-            part_info = {
-                "name": result.name,
-                "type": result.type,
-                "part_id": result.part_id,
-                "quantity": result.quantity,
-                "price": result.price
-            }
-        else:
-            return "No item found in catalog"
+        page_size = 5
+        offset = (search_page - 1) * page_size
 
-    return part_info
+        join_conditions = ""
+        specs_columns = ""
+
+        if part_type == "case":
+            join_conditions = "LEFT JOIN case_specs ON part_inventory.part_id = case_specs.part_id"
+            specs_columns = """
+                case_specs.name AS case_name,
+                case_specs.color,
+                case_specs.psu,
+                case_specs.side_panel,
+                case_specs.external_volume,
+                case_specs.internal_35_bays
+            """
+        elif part_type == "cpu":
+            join_conditions = "LEFT JOIN cpu_specs ON part_inventory.part_id = cpu_specs.part_id"
+            specs_columns = """
+                cpu_specs.core_count,
+                cpu_specs.core_clock,
+                cpu_specs.boost_clock,
+                cpu_specs.tdp
+            """
+        elif part_type == "monitor":
+            join_conditions = "LEFT JOIN monitor_specs ON part_inventory.part_id = monitor_specs.part_id"
+            specs_columns = """
+                monitor_specs.screen_size,
+                monitor_specs.resolution,
+                monitor_specs.refresh_rate,
+                monitor_specs.response_time
+            """
+        elif part_type == "motherboard":
+            join_conditions = "LEFT JOIN motherboard_specs ON part_inventory.part_id = motherboard_specs.part_id"
+            specs_columns = """
+                motherboard_specs.socket,
+                motherboard_specs.form_factor,
+                motherboard_specs.max_memory,
+                motherboard_specs.memory_slots
+            """
+        elif part_type == "power_supply":
+            join_conditions = "LEFT JOIN power_supply_specs ON part_inventory.part_id = power_supply_specs.part_id"
+            specs_columns = """
+                power_supply_specs.type AS psu_type,
+                power_supply_specs.efficiency,
+                power_supply_specs.wattage
+            """
+        elif part_type == "video_card":
+            join_conditions = "LEFT JOIN video_card_specs ON part_inventory.part_id = video_card_specs.part_id"
+            specs_columns = """
+                video_card_specs.chipset,
+                video_card_specs.memory,
+                video_card_specs.core_clock AS gpu_core_clock,
+                video_card_specs.boost_clock AS gpu_boost_clock
+            """
+        elif part_type == "internal_hard_drive":
+            join_conditions = "LEFT JOIN internal_hard_drive_specs ON part_inventory.part_id = internal_hard_drive_specs.part_id"
+            specs_columns = """
+                internal_hard_drive_specs.capacity,
+                internal_hard_drive_specs.price_per_gb,
+                internal_hard_drive_specs.type AS storage_type,
+                internal_hard_drive_specs.cache,
+                internal_hard_drive_specs.form_factor AS storage_form_factor,
+                internal_hard_drive_specs.interface AS storage_interface
+            """
+
+
+        sql = sqlalchemy.text(f"""
+            SELECT
+                part_inventory.part_id,
+                part_inventory.name,
+                part_inventory.type,
+                part_inventory.quantity,
+                part_inventory.dollars + part_inventory.cents / 100.0 AS price,
+                {specs_columns}
+            FROM part_inventory
+            {join_conditions}
+            WHERE LOWER(part_inventory.name) LIKE LOWER(:name) AND LOWER(type) LIKE LOWER(:part_type)
+            ORDER BY part_inventory.name
+            LIMIT :page_size OFFSET :offset
+        """)
+
+        result = connection.execute(sql, {'name': search_part.name, 'part_type': part_type, 'page_size': page_size, 'offset': offset})
+        rows = result.fetchall()
+
+        part_info_list = []
+        for row in rows:
+            if row.quantity > 0:
+                part_info = {
+                    "name": row.name,
+                    "type": row.type,
+                    "part_id": row.part_id,
+                    "quantity": row.quantity,
+                    "price": row.price,
+                }
+                if part_type == "case":
+                    part_info.update({
+                        "case_name": row.case_name,
+                        "color": row.color,
+                        "psu": row.psu,
+                        "side_panel": row.side_panel,
+                        "external_volume": row.external_volume,
+                        "internal_35_bays": row.internal_35_bays
+                    })
+                elif part_type == "cpu":
+                    part_info.update({
+                        "core_count": row.core_count,
+                        "core_clock": row.core_clock,
+                        "boost_clock": row.boost_clock,
+                        "tdp": row.tdp
+                    })
+                elif part_type == "monitor":
+                    part_info.update({
+                        "screen_size": row.screen_size,
+                        "resolution": row.resolution,
+                        "refresh_rate": row.refresh_rate,
+                        "response_time": row.response_time
+                    })
+                elif part_type == "motherboard":
+                    part_info.update({
+                        "socket": row.socket,
+                        "form_factor": row.form_factor,
+                        "max_memory": row.max_memory,
+                        "memory_slots": row.memory_slots
+                    })
+                elif part_type == "power_supply":
+                    part_info.update({
+                        "psu_type": row.psu_type,
+                        "efficiency": row.efficiency,
+                        "wattage": row.wattage
+                    })
+                elif part_type == "video_card":
+                    part_info.update({
+                        "chipset": row.chipset,
+                        "memory": row.memory,
+                        "gpu_core_clock": row.gpu_core_clock,
+                        "gpu_boost_clock": row.gpu_boost_clock
+                    })
+                elif part_type == "internal_hard_drive":
+                    part_info.update({
+                        "capacity": row.capacity,
+                        "price_per_gb": row.price_per_gb,
+                        "storage_type": row.storage_type,
+                        "cache": row.cache,
+                        "storage_form_factor": row.storage_form_factor,
+                        "storage_interface": row.storage_interface
+                    })
+
+                part_info_list.append(part_info)
+
+        response = {"results": part_info_list}
+
+        if search_page > 1:
+            response["previous"] = search_page - 1
+
+        if len(rows) == page_size:
+            response["next"] = search_page + 1
+
+        if not part_info_list:
+            return "No items found in catalog"
+
+        return response
 
 class Parts(BaseModel):
     user_id: int
