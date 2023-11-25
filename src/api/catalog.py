@@ -144,13 +144,16 @@ def search_catalog(search_part: SearchPart):
     with db.engine.begin() as connection:
         result = connection.execute(sql, {"name": search_part.name, "type": search_part.type})
         result = result.first()
-        part_info = {
-            "name": result.name,
-            "type": result.type,
-            "part_id": result.part_id,
-            "quantity": result.quantity,
-            "price": result.price
-        }
+        if result is not None:
+            part_info = {
+                "name": result.name,
+                "type": result.type,
+                "part_id": result.part_id,
+                "quantity": result.quantity,
+                "price": result.price
+            }
+        else:
+            return "No item found in catalog"
 
     return part_info
 
