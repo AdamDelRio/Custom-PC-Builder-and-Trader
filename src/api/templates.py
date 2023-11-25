@@ -55,10 +55,11 @@ def remove_item_from_template(template_id, part_id):
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text("DELETE FROM pc_template_parts WHERE template_id = :template_id and part_id = :part_id"), 
                            parameters= {"template_id":template_id,
-                                        "part_id":part_id
-                                        })
+                                        "part_id":part_id})
     
-        return "Item removed from template"
+        return "item removed from template"
+                                                                                                                                              
+
 
 class NewCart(BaseModel):
     user_id: int
