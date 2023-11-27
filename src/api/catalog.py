@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from fastapi import HTTPException
 from fastapi import Query
 from typing import List
+from enum import Enum
 
 router = APIRouter()
 
@@ -125,11 +126,20 @@ def get_user_catalog():
 class SearchPart(BaseModel):
     name: str
 
+class PartType(str, Enum):
+    case = "case"
+    cpu = "cpu"
+    monitor = "monitor"
+    motherboard = "motherboard"
+    power_supply = "power_supply"
+    video_card = "video_card"
+    internal_hard_drive = "internal_hard_drive"
+
 @router.post("/catalog/search", tags=["catalog"])
 def search_catalog(
     search_part: SearchPart,
-    part_type: str = Query(None, title="Part Type", description="Filter by part type", regex="^(case|cpu|monitor|motherboard|power_supply|video_card|internal_hard_drive)$"),
-    search_page: int = 1,
+    part_type: PartType = Query(None, title="Part Type", description="Filter by part type"),
+    search_page: int = Query(1, title="Search Page", description="Page number for search results"),
     sort_order: str = Query("name", title="Sort Order", description="Order results by 'name' or 'price'"),
     ):
     with db.engine.begin() as connection:
