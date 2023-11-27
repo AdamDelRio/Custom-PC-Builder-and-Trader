@@ -287,7 +287,27 @@ def search_catalog(
             response["previous"] = search_page - 1
 
         if len(rows) == page_size:
-            response["next"] = search_page + 1
+            next_offset = offset + page_size
+            next_query = f"""
+                SELECT
+                    part_inventory.part_id,
+                    part_inventory.name,
+                    part_inventory.type,
+                    part_inventory.quantity,
+                    part_inventory.dollars + part_inventory.cents / 100.0 AS price,
+                    {specs_columns}
+                FROM part_inventory
+                {join_conditions}
+                WHERE LOWER(part_inventory.name) ILIKE LOWER(:name) AND LOWER(type) ILIKE LOWER(:part_type) AND quantity > 0
+                ORDER BY part_inventory.name
+                LIMIT :page_size OFFSET :offset
+                """
+
+            next_result = connection.execute(sqlalchemy.text(next_query), {'name': '%' + search_part.name + '%', 'part_type': '%' + part_type + '%', 'page_size': page_size, 'offset': next_offset})
+            next_rows = next_result.fetchone()
+
+            if next_rows not in (None, "null"):
+                response["next"] = search_page + 1
 
         if not part_info_list:
             return "No items found in catalog"
