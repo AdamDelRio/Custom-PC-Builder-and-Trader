@@ -209,7 +209,7 @@ def search_catalog(
                 {specs_columns}
             FROM part_inventory
             {join_conditions}
-            WHERE LOWER(part_inventory.name) ILIKE LOWER(:name) AND LOWER(type) ILIKE LOWER(:part_type) AND quantity > 0
+            WHERE LOWER(part_inventory.name) ILIKE LOWER(:name) AND LOWER(part_inventory.type) ILIKE LOWER(:part_type) AND quantity > 0
             ORDER BY part_inventory.name
             LIMIT :page_size OFFSET :offset
         """)
@@ -298,7 +298,8 @@ def search_catalog(
                     {specs_columns}
                 FROM part_inventory
                 {join_conditions}
-                WHERE LOWER(part_inventory.name) ILIKE LOWER(:name) AND LOWER(type) ILIKE LOWER(:part_type) AND quantity > 0
+                WHERE LOWER(part_inventory.name) ILIKE LOWER(:name) AND 
+                LOWER(part_inventory.type) ILIKE LOWER(:part_type) AND quantity > 0
                 ORDER BY part_inventory.name
                 LIMIT :page_size OFFSET :offset
                 """
