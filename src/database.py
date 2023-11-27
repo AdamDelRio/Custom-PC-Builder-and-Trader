@@ -8,4 +8,4 @@ def database_connection_url():
 
     return os.environ.get("POSTGRES_URI")
 
-engine = create_engine(database_connection_url(), pool_pre_ping=True, isolation_level="SERIALIZABLE")
+engine = create_engine(database_connection_url(), pool_pre_ping=True, isolation_level="REPEATABLE READ")
