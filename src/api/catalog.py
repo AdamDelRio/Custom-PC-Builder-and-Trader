@@ -130,13 +130,19 @@ def search_catalog(
     search_part: SearchPart,
     part_type: str = Query(None, title="Part Type", description="Filter by part type", regex="^(case|cpu|monitor|motherboard|power_supply|video_card|internal_hard_drive)$"),
     search_page: int = 1,
-):
+    sort_order: str = Query("name", title="Sort Order", description="Order results by 'name' or 'price'"),
+    ):
     with db.engine.begin() as connection:
         page_size = 5
         offset = (search_page - 1) * page_size
 
         join_conditions = ""
         specs_columns = ""
+
+        if sort_order not in ["name", "price"]:
+            return "Invalid sort order"
+
+        order_clause = "part_inventory.name" if sort_order == "name" else "(part_inventory.dollars + part_inventory.cents / 100.0)"
 
         if part_type == "case":
             join_conditions = "LEFT JOIN case_specs ON part_inventory.part_id = case_specs.part_id"
@@ -210,7 +216,7 @@ def search_catalog(
             FROM part_inventory
             {join_conditions}
             WHERE LOWER(part_inventory.name) ILIKE LOWER(:name) AND LOWER(part_inventory.type) ILIKE LOWER(:part_type) AND quantity > 0
-            ORDER BY part_inventory.name
+            ORDER BY {order_clause}
             LIMIT :page_size OFFSET :offset
         """)
 
@@ -300,7 +306,7 @@ def search_catalog(
                 {join_conditions}
                 WHERE LOWER(part_inventory.name) ILIKE LOWER(:name) AND 
                 LOWER(part_inventory.type) ILIKE LOWER(:part_type) AND quantity > 0
-                ORDER BY part_inventory.name
+                ORDER BY {order_clause}
                 LIMIT :page_size OFFSET :offset
                 """
 
