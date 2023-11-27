@@ -231,70 +231,11 @@ def search_catalog(
         """)
 
         result = connection.execute(sql, {'name': '%' + search_part.name + '%', 'part_type': '%' + part_type + '%', 'page_size': page_size, 'offset': offset})
-        rows = result.fetchall()
+        rows = result.mappings().all()
 
         part_info_list = []
-        for row in rows:
-            part_info = {
-                "name": row.name,
-                "type": row.type,
-                "part_id": row.part_id,
-                "quantity": row.quantity,
-                "price": row.price,
-            }
-            if part_type == "case":
-                part_info.update({
-                    "case_name": row.case_name,
-                    "color": row.color,
-                    "psu": row.psu,
-                    "side_panel": row.side_panel,
-                    "external_volume": row.external_volume,
-                    "internal_35_bays": row.internal_35_bays
-                })
-            elif part_type == "cpu":
-                part_info.update({
-                    "core_count": row.core_count,
-                    "core_clock": row.core_clock,
-                    "boost_clock": row.boost_clock,
-                    "tdp": row.tdp
-                })
-            elif part_type == "monitor":
-                part_info.update({
-                    "screen_size": row.screen_size,
-                    "resolution": row.resolution,
-                    "refresh_rate": row.refresh_rate,
-                    "response_time": row.response_time
-                })
-            elif part_type == "motherboard":
-                part_info.update({
-                    "socket": row.socket,
-                    "form_factor": row.form_factor,
-                    "max_memory": row.max_memory,
-                    "memory_slots": row.memory_slots
-                })
-            elif part_type == "power_supply":
-                part_info.update({
-                    "psu_type": row.psu_type,
-                    "efficiency": row.efficiency,
-                    "wattage": row.wattage
-                })
-            elif part_type == "video_card":
-                part_info.update({
-                    "chipset": row.chipset,
-                    "memory": row.memory,
-                    "gpu_core_clock": row.gpu_core_clock,
-                    "gpu_boost_clock": row.gpu_boost_clock
-                })
-            elif part_type == "internal_hard_drive":
-                part_info.update({
-                    "capacity": row.capacity,
-                    "price_per_gb": row.price_per_gb,
-                    "storage_type": row.storage_type,
-                    "cache": row.cache,
-                    "storage_form_factor": row.storage_form_factor,
-                    "storage_interface": row.storage_interface
-                })
-
+        for row_dict in rows:
+            part_info = dict(row_dict)
             part_info_list.append(part_info)
 
         response = {"results": part_info_list}
