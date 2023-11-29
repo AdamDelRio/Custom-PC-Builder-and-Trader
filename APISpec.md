@@ -84,7 +84,7 @@ Users can use any of these API calls when using/creating a PC Building Template:
 }
 ```
 
-### 2.3 Convert Template to Cart - `/template/existing/{template_id}/add_to_cart` - `POST`
+### 2.3 Convert Template to Cart (complex endpoint) - `/template/existing/{template_id}/add_to_cart` - `POST`
 
 Creates cart if no cart under user, else creates cart and adds parts to cart
 
@@ -234,7 +234,7 @@ Handles the checkout process for a specific cart.
 }
 ```
 
-## 4. Selling
+## 4. Catalog
 
 The API calls are made in this sequence for selling:
 
@@ -261,6 +261,32 @@ Adds items for selling to the customer's catalog, which is then added to the tot
 
 ```jsx
 {
-	"success":"boolean" /*True if created, false if error
+	"success":"boolean" /*True if created, false if error*/
 }
+```
+
+### 4.2 Search catalog (Complex endpoint) - `/catalog/search`
+
+Searches and returns items based on part_type. Ability to sort by specs as well. Also returns inventory and if they are in stock. 
+
+**Request**
+
+```jsx
+{
+	"search_part": SearchPart, /*class SearchPart that contains name (string)*/
+	"part_type":PartType, /* class PartType which is an enum of different types of parts available*/
+	"search_page":int, /*pagination for results*/
+	"sort_order":str /* sorting by type or name */
+}
+```
+
+**Response**
+
+```jsx
+[
+	{
+		// Response body of items in catalog based on name provided.  
+	}
+]
+
 ```
