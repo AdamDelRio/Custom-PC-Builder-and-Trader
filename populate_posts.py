@@ -5,6 +5,7 @@ import dotenv
 from faker import Faker
 import numpy as np
 import multiprocessing
+import random
 
 
 def database_connection_url():
@@ -408,15 +409,22 @@ def add_user_parts(num_entries):
     engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
 
     fake = Faker()
-    with engine.begin() as conn:
-        print("adding user_parts")
-        for i in range(num_entries):
-            # if (i % 1000 == 0):
-            #     print(i)
+    
+    # Fetch all user IDs and part IDs
+    with engine.connect() as conn:
+        user_ids = conn.execute(sqlalchemy.text("SELECT id FROM users")).fetchall()
+        part_ids = conn.execute(sqlalchemy.text("SELECT id FROM part_inventory")).fetchall()
 
-            # Get random user_id and part_id
-            user_id = conn.execute(sqlalchemy.text("SELECT id FROM users ORDER BY RANDOM() LIMIT 1")).fetchone()[0]
-            part_id = conn.execute(sqlalchemy.text("SELECT id FROM part_inventory ORDER BY RANDOM() LIMIT 1")).fetchone()[0]
+    print("adding user_parts")
+    
+    with engine.begin() as conn:
+        for i in range(num_entries):
+            if (i % 100 == 0):
+                print(i)
+
+            # Get random user_id and part_id from the pre-fetched lists
+            user_id = random.choice(user_ids)[0]
+            part_id = random.choice(part_ids)[0]
 
             quantity = fake.random_int(min=1, max=50)
             dollars = fake.random_int(min=1, max=1000)
@@ -426,6 +434,7 @@ def add_user_parts(num_entries):
                 INSERT into user_parts (user_id, part_id, quantity, dollars, cents) 
                 VALUES (:user_id, :part_id, :quantity, :dollars, :cents);
             """), {"user_id": user_id, "part_id": part_id, "quantity": quantity, "dollars": dollars, "cents": cents})
+
 
 def add_carts_and_cart_items(num_carts):
     engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
