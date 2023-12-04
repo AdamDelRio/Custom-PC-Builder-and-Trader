@@ -7,3 +7,6 @@ info.log
 *.env
 .vscode
 .venv
+supabase/
+node_modules/
+package*
