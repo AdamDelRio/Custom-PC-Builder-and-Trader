@@ -94,8 +94,8 @@ def add_users(num_users):
         print("adding users")
         posts = []
         for i in range(num_users):
-            if (i % 1000 == 0):
-                print(i)
+            # if (i % 1000 == 0):
+            #     print(i)
             
 
             email = fake.unique.email()
@@ -130,8 +130,8 @@ def add_case_specs(num_cases):
         print("adding cases")
         posts = []
         for i in range(num_cases):
-            if (i % 1000 == 0):
-                print(i)
+            # if (i % 1000 == 0):
+            #     print(i)
 
             company_name = fake.random_element(companies)
             model_name = fake.word()
@@ -168,8 +168,8 @@ def add_cpu_specs(num_cpus):
     with engine.begin() as conn:
         print("adding CPUs")
         for i in range(num_cpus):
-            if (i % 1000 == 0):
-                print(i)
+            # if (i % 1000 == 0):
+            #     print(i)
 
             company_name = fake.random_element(companies)
             model_name = fake.word()
@@ -209,8 +209,8 @@ def add_internal_hard_drive_specs(num_drives):
     with engine.begin() as conn:
         print("adding internal hard drives")
         for i in range(num_drives):
-            if (i % 1000 == 0):
-                print(i)
+            # if (i % 1000 == 0):
+            #     print(i)
 
             company_name = fake.random_element(companies)
             model_name = fake.word()
@@ -249,8 +249,8 @@ def add_monitor_specs(num_monitors):
     with engine.begin() as conn:
         print("adding monitors")
         for i in range(num_monitors):
-            if (i % 1000 == 0):
-                print(i)
+            # if (i % 1000 == 0):
+            #     print(i)
 
             company_name = fake.random_element(companies)
             model_name = fake.word()
@@ -290,8 +290,8 @@ def add_motherboard_specs(num_motherboards):
     with engine.begin() as conn:
         print("adding motherboards")
         for i in range(num_motherboards):
-            if (i % 1000 == 0):
-                print(i)
+            # if (i % 1000 == 0):
+            #     print(i)
 
             company_name = fake.random_element(companies)
             model_name = fake.word()
@@ -331,8 +331,8 @@ def add_power_supply_specs(num_power_supplies):
     with engine.begin() as conn:
         print("adding power supplies")
         for i in range(num_power_supplies):
-            if (i % 1000 == 0):
-                print(i)
+            # if (i % 1000 == 0):
+            #     print(i)
 
             company_name = fake.random_element(companies)
             model_name = fake.word()
@@ -373,8 +373,8 @@ def add_video_card_specs(num_video_cards):
     with engine.begin() as conn:
         print("adding video cards")
         for i in range(num_video_cards):
-            if (i % 1000 == 0):
-                print(i)
+            # if (i % 1000 == 0):
+            #     print(i)
 
             company_name = fake.random_element(companies)
             model_name = fake.word()
@@ -411,8 +411,8 @@ def add_user_parts(num_entries):
     with engine.begin() as conn:
         print("adding user_parts")
         for i in range(num_entries):
-            if (i % 1000 == 0):
-                print(i)
+            # if (i % 1000 == 0):
+            #     print(i)
 
             # Get random user_id and part_id
             user_id = conn.execute(sqlalchemy.text("SELECT id FROM users ORDER BY RANDOM() LIMIT 1")).fetchone()[0]
@@ -434,8 +434,8 @@ def add_carts_and_cart_items(num_carts):
     with engine.begin() as conn:
         print("adding carts and cart_items")
         for i in range(num_carts):
-            if (i % 1000 == 0):
-                print(i)
+            # if (i % 1000 == 0):
+            #     print(i)
 
             # Get random user_id
             user_id = conn.execute(sqlalchemy.text("SELECT id FROM users ORDER BY RANDOM() LIMIT 1")).fetchone()[0]
@@ -503,8 +503,8 @@ def add_pc_templates_and_parts(num_templates):
     with engine.begin() as conn:
         print("adding pc_templates and pc_template_parts")
         for i in range(num_templates):
-            if (i % 1000 == 0):
-                print(i)
+            # if (i % 1000 == 0):
+            #     print(i)
 
             # Get random user_id
             user_id = conn.execute(sqlalchemy.text("SELECT id FROM users ORDER BY RANDOM() LIMIT 1")).fetchone()[0]
@@ -574,7 +574,7 @@ def add_pc_templates_and_parts(num_templates):
 
 def main():
     quants = {
-        "add_users": 200000,
+        "add_users": 100000,
         "add_case_specs": 100000,
         "add_cpu_specs": 100000,
         "add_internal_hard_drive_specs": 100000,
@@ -582,7 +582,7 @@ def main():
         "add_motherboard_specs": 100000,
         "add_power_supply_specs": 100000,
         "add_video_card_specs": 100000,
-        "add_user_parts": 150000,
+        "add_user_parts": 100000,
         "add_carts_and_cart_items": 100000,
         "add_pc_templates_and_parts": 100000
     }
@@ -591,16 +591,16 @@ def main():
 
     # Define task groups based on dependencies
     task_groups = [
-        [add_users],
-        [add_cpu_specs],
+        [add_users,
+         add_cpu_specs],
         [add_internal_hard_drive_specs],
         [add_monitor_specs],
         [add_motherboard_specs],
         [add_power_supply_specs],
         [add_video_card_specs],
         [add_case_specs],
+        [add_user_parts],
         [
-            add_user_parts,
             add_carts_and_cart_items,
             add_pc_templates_and_parts
         ]
