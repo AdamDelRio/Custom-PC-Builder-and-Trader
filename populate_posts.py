@@ -419,8 +419,8 @@ def add_user_parts(num_entries):
     
     with engine.begin() as conn:
         for i in range(num_entries):
-            if (i % 100 == 0):
-                print(i)
+            # if (i % 100 == 0):
+            #     print(i)
 
             # Get random user_id and part_id from the pre-fetched lists
             user_id = random.choice(user_ids)[0]
