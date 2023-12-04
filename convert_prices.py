@@ -10,7 +10,7 @@ from sys import argv
 def main():
     print('test')
     with db.engine.begin() as connection:
-        sql = 'SELECT part_id, price from part_inventory'
+        sql = 'SELECT part_id, price from internal_hard_drive_specs'
         result = connection.execute(statement=sqlalchemy.text(sql))
         result = result.all()
 

@@ -1,5 +1,6 @@
 import sqlalchemy
 import os
+from json import load
 import dotenv
 from faker import Faker
 import numpy as np
@@ -14,6 +15,58 @@ def database_connection_url():
     DB_NAME: str = os.environ.get("POSTGRES_DB")
     return f"postgresql://{DB_USER}:{DB_PASSWD}@{DB_SERVER}:{DB_PORT}/{DB_NAME}"
 
+
+def edit_prices():
+    engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
+
+    with engine.begin() as connection:
+        sql = 'SELECT part_id, price from internal_hard_drive_specs'
+        result = connection.execute(statement=sqlalchemy.text(sql))
+        result = result.all()
+
+        part_dict = {row[0]: (int(str(round(row[1], 2)).split(".")[0]), int(str(round(row[1], 2)).split(".")[1])) for row in result}
+        
+        for value in part_dict:
+            sql = f"UPDATE part_inventory SET dollars = :dollars, cents = :cents WHERE part_id = :part_id"
+            parameters = {
+                "part_id": value,
+                "dollars": part_dict[value][0] if part_dict[value][0] else 0,
+                "cents": part_dict[value][1] if part_dict[value][1] else 0
+            }
+            result = connection.execute(statement=sqlalchemy.text(sql),parameters=parameters)
+
+
+def add_rows():
+    filename = 'internal_hard_drive.json'
+
+    path = f"./src/data/json/{filename}"
+    with open(path, "r") as f:
+        data = load(f)
+    engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
+    
+    with engine.begin() as conn:
+        part_type = filename.split(".")[0]
+        schemas = [key for key in data[0].keys()]
+        for value in data:
+            sql = f"INSERT into part_inventory (name, type, quantity) VALUES (:name, :type, :quantity) RETURNING part_id"
+            parameters = {
+                "name":str(value["name"]),
+                "type":str(part_type),
+                "quantity":0
+            }
+            result = conn.execute(statement=sqlalchemy.text(sql),parameters=parameters)
+            part_id = result.first()[0]
+            #if price = null, skip this iteration of the loop
+            if value["price"] == None:
+                continue 
+            sql = f"INSERT into {part_type}_specs (part_id, {', '.join(schemas)}) VALUES (:part_id,{', '.join([f':{column_name}' for column_name in schemas])})"
+            parameters = {
+                "part_id": part_id,
+            }
+            for schema in schemas:
+                parameters[schema] = value[schema]
+            
+            result = conn.execute(statement=sqlalchemy.text(sql),parameters=parameters)
 
 def randomize_quantity():
     engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
@@ -63,4 +116,4 @@ def add_users(num_users):
             """), {"username": username, "email": email, })
 
 if __name__ == "__main__":
-    randomize_quantity()
+    edit_prices()
