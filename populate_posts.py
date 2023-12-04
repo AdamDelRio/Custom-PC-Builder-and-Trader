@@ -574,7 +574,7 @@ def add_pc_templates_and_parts(num_templates):
 
 def main():
     quants = {
-        "add_users": 100000,
+        "add_users": 50000,
         "add_case_specs": 100000,
         "add_cpu_specs": 100000,
         "add_internal_hard_drive_specs": 100000,
