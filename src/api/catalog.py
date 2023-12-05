@@ -214,7 +214,7 @@ def add_to_user_catalog(parts: Parts):
     except Exception as e:
         return {"status": "error", "message": "An error occurred: " + str(e)}
     
-@router.post("/search_user_catalog", tags=["catalog"])
+@router.post("/catalog/search_user_catalog", tags=["catalog"])
 def search_user_catalog(
     search_part: SearchPart,
     part_type: PartType = Query(None, title="Part Type", description="Filter by part type"),
