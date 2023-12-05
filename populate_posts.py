@@ -440,140 +440,122 @@ def add_carts_and_cart_items(num_carts):
     engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
 
     fake = Faker()
+    
+    # Fetch all user IDs
+    with engine.connect() as conn:
+        user_ids = conn.execute(sqlalchemy.text("SELECT id FROM users")).fetchall()
+
     with engine.begin() as conn:
         print("adding carts and cart_items")
-        for i in range(num_carts):
-            # if (i % 1000 == 0):
-            #     print(i)
+        for _ in range(num_carts):
+            user_id = random.choice(user_ids)[0]
 
-            # Get random user_id
-            user_id = conn.execute(sqlalchemy.text("SELECT id FROM users ORDER BY RANDOM() LIMIT 1")).fetchone()[0]
-
-            # Insert into carts table and get cart_id
             cart_id = conn.execute(sqlalchemy.text("""
-                INSERT into carts (user_id) 
+                INSERT INTO carts (user_id) 
                 VALUES (:user_id) RETURNING cart_id;
             """), {"user_id": user_id}).fetchone()[0]
 
-            # Randomized amount of cart items per cart (1-10 items)
             num_cart_items = fake.random_int(min=1, max=10)
 
-            # Maintain a set of unique part_ids for each cart
-            unique_part_ids = set()
-
             for _ in range(num_cart_items):
-                # Decide whether it's a user_item or not
                 user_item = fake.boolean()
 
-                # If it's a user_item, get part_id and quantity from user_parts, else get part_id and quantity from part_inventory
                 if user_item:
-                    # Get random user_part
-                    if unique_part_ids:
-                        user_part = conn.execute(sqlalchemy.text("SELECT * FROM user_parts WHERE user_id = :user_id AND part_id NOT IN :unique_part_ids ORDER BY RANDOM() LIMIT 1"), {"user_id": user_id, "unique_part_ids": tuple(unique_part_ids)}).fetchone()
-                    else:
-                        user_part = None
+                    user_part_info = conn.execute(sqlalchemy.text("""
+                        SELECT * FROM user_parts 
+                        WHERE user_id = :user_id 
+                        AND quantity > 0
+                        ORDER BY RANDOM() LIMIT 1;
+                    """), {"user_id": user_id}).fetchone()
 
-                    if user_part:
-                        part_id = user_part.part_id
-                        quantity = fake.random_int(min=1, max=user_part.quantity)
-                        unique_part_ids.add(part_id)
-                    else:
-                        # If there are no user_parts for the user, default to part_inventory
-                        part_info = conn.execute(sqlalchemy.text("SELECT part_id, quantity FROM part_inventory ORDER BY RANDOM() LIMIT 1")).fetchone()
-                        if part_info:
-                            part_id = part_info.part_id
-                            quantity = fake.random_int(min=1, max=part_info.quantity)
-                            unique_part_ids.add(part_id)
+                    part_info = user_part_info or conn.execute(sqlalchemy.text("""
+                        SELECT * FROM part_inventory 
+                        WHERE quantity > 0
+                        ORDER BY RANDOM() LIMIT 1;
+                    """)).fetchone()
                 else:
-                    # Get random part_id and quantity from part_inventory
-                    if unique_part_ids:
-                        part_info = conn.execute(sqlalchemy.text("SELECT part_id, quantity FROM part_inventory WHERE part_id NOT IN :unique_part_ids ORDER BY RANDOM() LIMIT 1"), {"unique_part_ids": tuple(unique_part_ids)}).fetchone()
-                    else:
-                        part_info = conn.execute(sqlalchemy.text("SELECT part_id, quantity FROM part_inventory WHERE 1 = 0")).fetchone()
+                    part_info = conn.execute(sqlalchemy.text("""
+                        SELECT * FROM part_inventory 
+                        WHERE quantity > 0
+                        ORDER BY RANDOM() LIMIT 1;
+                    """)).fetchone()
 
-                    if part_info:
-                        part_id = part_info.part_id
-                        quantity = fake.random_int(min=1, max=part_info.quantity)
-                        unique_part_ids.add(part_id)
+                if part_info and part_info.quantity > 0:
+                    part_id, quantity = part_info.part_id, fake.random_int(min=1, max=part_info.quantity)
+                else:
+                    # Handle the case when the part inventory is empty
+                    part_id, quantity = None, 0
 
-                # Random boolean for checked_out
                 checked_out = fake.boolean()
 
-                # Insert into cart_items
                 conn.execute(sqlalchemy.text("""
-                    INSERT into cart_items (cart_id, user_item, part_id, quantity, checked_out) 
+                    INSERT INTO cart_items (cart_id, user_item, part_id, quantity, checked_out) 
                     VALUES (:cart_id, :user_item, :part_id, :quantity, :checked_out);
                 """), {"cart_id": cart_id, "user_item": user_item, "part_id": part_id, "quantity": quantity, "checked_out": checked_out})
+
+
+
+
+
+
+
+
 
 def add_pc_templates_and_parts(num_templates):
     engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
 
     fake = Faker()
+    
+    # Fetch all user IDs
+    with engine.connect() as conn:
+        user_ids = conn.execute(sqlalchemy.text("SELECT id FROM users")).fetchall()
+
     with engine.begin() as conn:
         print("adding pc_templates and pc_template_parts")
-        for i in range(num_templates):
-            # if (i % 1000 == 0):
-            #     print(i)
+        for _ in range(num_templates):
+            user_id = random.choice(user_ids)[0]
 
-            # Get random user_id
-            user_id = conn.execute(sqlalchemy.text("SELECT id FROM users ORDER BY RANDOM() LIMIT 1")).fetchone()[0]
-
-            # Insert into pc_templates table and get template_id
             template_id = conn.execute(sqlalchemy.text("""
-                INSERT into pc_templates (user_id) 
+                INSERT INTO pc_templates (user_id) 
                 VALUES (:user_id) RETURNING id;
             """), {"user_id": user_id}).fetchone()[0]
 
-            # Randomized number of parts per template (1-5 parts)
             num_template_parts = fake.random_int(min=1, max=5)
 
-            # Maintain a set of unique part_ids for each template
-            unique_part_ids = set()
-
             for _ in range(num_template_parts):
-                # Decide whether it's a user_part or not
                 user_part = fake.boolean()
 
-                # If it's a user_part, get part_id and quantity from user_parts, else get part_id and quantity from part_inventory
                 if user_part:
-                    # Get random user_part
-                    if unique_part_ids:
-                        user_part_info = conn.execute(sqlalchemy.text("SELECT * FROM user_parts WHERE user_id = :user_id AND part_id NOT IN :unique_part_ids ORDER BY RANDOM() LIMIT 1"), {"user_id": user_id, "unique_part_ids": tuple(unique_part_ids)}).fetchone()
-                    else:
-                        user_part_info = None
+                    user_part_info = conn.execute(sqlalchemy.text("""
+                        SELECT * FROM user_parts 
+                        WHERE user_id = :user_id 
+                        AND quantity > 0
+                        ORDER BY RANDOM() LIMIT 1;
+                    """), {"user_id": user_id}).fetchone()
 
-                    if user_part_info:
-                        part_id = user_part_info.part_id
-                        min_quantity = 1
-                        max_quantity = max(2, user_part_info.quantity)  # Ensure there is a valid range
-                        quantity = fake.random_int(min=min_quantity, max=max_quantity)
-                        unique_part_ids.add(part_id)
-                    else:
-                        # If there are no user_parts for the user, default to part_inventory
-                        part_info = conn.execute(sqlalchemy.text("SELECT part_id, quantity FROM part_inventory ORDER BY RANDOM() LIMIT 1")).fetchone()
-                        if part_info:
-                            part_id = part_info.part_id
-                            quantity = fake.random_int(min=1, max=part_info.quantity)
-                            unique_part_ids.add(part_id)
+                    part_info = user_part_info or conn.execute(sqlalchemy.text("""
+                        SELECT * FROM part_inventory 
+                        WHERE quantity > 0
+                        ORDER BY RANDOM() LIMIT 1;
+                    """)).fetchone()
                 else:
-                    # Get random part_id and quantity from part_inventory
-                    if unique_part_ids:
-                        part_info = conn.execute(sqlalchemy.text("SELECT part_id, quantity FROM part_inventory WHERE part_id NOT IN :unique_part_ids ORDER BY RANDOM() LIMIT 1"), {"unique_part_ids": tuple(unique_part_ids)}).fetchone()
-                    else:
-                        part_info = conn.execute(sqlalchemy.text("SELECT part_id, quantity FROM part_inventory ORDER BY RANDOM() LIMIT 1")).fetchone()
+                    part_info = conn.execute(sqlalchemy.text("""
+                        SELECT * FROM part_inventory 
+                        WHERE quantity > 0
+                        ORDER BY RANDOM() LIMIT 1;
+                    """)).fetchone()
 
-                    if part_info:
-                        part_id = part_info.part_id
-                        min_quantity = 1
-                        max_quantity = max(2, part_info.quantity)  # Ensure there is a valid range
-                        quantity = fake.random_int(min=min_quantity, max=max_quantity)
-                        unique_part_ids.add(part_id)
+                if part_info and part_info.quantity > 0:
+                    part_id, quantity = part_info.part_id, fake.random_int(min=1, max=part_info.quantity)
+                else:
+                    # Handle the case when the part inventory is empty
+                    part_id, quantity = None, 0
 
-                # Insert into pc_template_parts with user_id
                 conn.execute(sqlalchemy.text("""
-                    INSERT into pc_template_parts (template_id, user_part, user_id, part_id, quantity) 
+                    INSERT INTO pc_template_parts (template_id, user_part, user_id, part_id, quantity) 
                     VALUES (:template_id, :user_part, :user_id, :part_id, :quantity);
                 """), {"template_id": template_id, "user_part": user_part, "user_id": user_id, "part_id": part_id, "quantity": quantity})
+
 
 
 
@@ -609,9 +591,11 @@ def main():
         [add_video_card_specs],
         [add_case_specs],
         [add_user_parts],
+        
         [
             add_carts_and_cart_items,
             add_pc_templates_and_parts
+            
         ]
     ]
 
