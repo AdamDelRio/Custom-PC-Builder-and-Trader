@@ -221,6 +221,9 @@ def search_user_catalog(
     search_page: int = Query(1, title="Search Page", description="Page number for search results"),
     sort_order: str = Query("name", title="Sort Order", description="Order results by 'name' or 'price"),
 ):
+    if not part_type:
+        part_type = ""
+
     with db.engine.begin() as connection:
         page_size = 5
         offset = (search_page - 1) * page_size
@@ -235,7 +238,7 @@ def search_user_catalog(
 
         if part_type == "case":
             join_conditions = "LEFT JOIN case_specs AS specs ON up.part_id = specs.part_id"
-            specs_columns = """
+            specs_columns = ", " + """
                 specs.name AS case_name,
                 specs.color,
                 specs.psu,
@@ -245,7 +248,7 @@ def search_user_catalog(
             """
         elif part_type == "cpu":
             join_conditions = "LEFT JOIN cpu_specs AS specs ON up.part_id = specs.part_id"
-            specs_columns = """
+            specs_columns = ", " + """
                 specs.core_count,
                 specs.core_clock,
                 specs.boost_clock,
@@ -253,7 +256,7 @@ def search_user_catalog(
             """
         elif part_type == "monitor":
             join_conditions = "LEFT JOIN monitor_specs AS specs ON up.part_id = specs.part_id"
-            specs_columns = """
+            specs_columns = ", " + """
                 specs.screen_size,
                 specs.resolution,
                 specs.refresh_rate,
@@ -261,7 +264,7 @@ def search_user_catalog(
             """
         elif part_type == "motherboard":
             join_conditions = "LEFT JOIN motherboard_specs AS specs ON up.part_id = specs.part_id"
-            specs_columns = """
+            specs_columns = ", " + """
                 specs.socket,
                 specs.form_factor,
                 specs.max_memory,
@@ -269,14 +272,14 @@ def search_user_catalog(
             """
         elif part_type == "power_supply":
             join_conditions = "LEFT JOIN power_supply_specs AS specs ON up.part_id = specs.part_id"
-            specs_columns = """
+            specs_columns = ", " + """
                 specs.type AS psu_type,
                 specs.efficiency,
                 specs.wattage
             """
         elif part_type == "video_card":
             join_conditions = "LEFT JOIN video_card_specs AS specs ON up.part_id = specs.part_id"
-            specs_columns = """
+            specs_columns = ", " + """
                 specs.chipset,
                 specs.memory,
                 specs.core_clock AS gpu_core_clock,
@@ -284,7 +287,7 @@ def search_user_catalog(
             """
         elif part_type == "internal_hard_drive":
             join_conditions = "LEFT JOIN internal_hard_drive_specs AS specs ON up.part_id = specs.part_id"
-            specs_columns = """
+            specs_columns = ", " + """
                 specs.capacity,
                 specs.price_per_gb,
                 specs.type AS storage_type,
@@ -301,7 +304,7 @@ def search_user_catalog(
                 pi.name,
                 pi.type,
                 up.quantity,
-                up.dollars + up.cents / 100.0 AS price,
+                up.dollars + up.cents / 100.0 AS price
                 {specs_columns}
             FROM user_parts up
             JOIN part_inventory pi ON up.part_id = pi.part_id
@@ -340,7 +343,7 @@ def search_user_catalog(
                     pi.name,
                     pi.type,
                     up.quantity,
-                    up.dollars + up.cents / 100.0 AS price,
+                    up.dollars + up.cents / 100.0 AS price
                     {specs_columns}
                 FROM user_parts up
                 JOIN part_inventory pi ON up.part_id = pi.part_id
