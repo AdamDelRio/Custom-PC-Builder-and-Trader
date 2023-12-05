@@ -114,7 +114,7 @@ def search_catalog(
                 {specs_columns}
             FROM part_inventory
             {join_conditions}
-            WHERE LOWER(part_inventory.name) ILIKE LOWER(:name) AND LOWER(part_inventory.type) ILIKE LOWER(:part_type) AND quantity > 0
+            WHERE part_inventory.name ILIKE :name AND part_inventory.type ILIKE :part_type AND quantity > 0
             ORDER BY {order_clause}
             LIMIT :page_size OFFSET :offset
         """)
@@ -144,8 +144,8 @@ def search_catalog(
                     {specs_columns}
                 FROM part_inventory
                 {join_conditions}
-                WHERE LOWER(part_inventory.name) ILIKE LOWER(:name) AND 
-                LOWER(part_inventory.type) ILIKE LOWER(:part_type) AND quantity > 0
+                WHERE part_inventory.name ILIKE :name AND 
+                part_inventory.type ILIKE :part_type AND quantity > 0
                 ORDER BY {order_clause}
                 LIMIT :page_size OFFSET :offset
                 """
@@ -314,8 +314,8 @@ def search_user_catalog(
             FROM user_parts up
             JOIN part_inventory pi ON up.part_id = pi.part_id
             {join_conditions}
-            WHERE LOWER(pi.name) ILIKE LOWER(:name) AND 
-            LOWER(pi.type) ILIKE LOWER(:part_type) AND up.quantity > 0
+            WHERE pi.name ILIKE :name AND 
+            pi.type ILIKE :part_type AND up.quantity > 0
             ORDER BY {order_clause}
             LIMIT :page_size OFFSET :offset
         """)
@@ -353,8 +353,8 @@ def search_user_catalog(
                 FROM user_parts up
                 JOIN part_inventory pi ON up.part_id = pi.part_id
                 {join_conditions}
-                WHERE LOWER(pi.name) ILIKE LOWER(:name) AND 
-                LOWER(pi.type) ILIKE LOWER(:part_type) AND up.quantity > 0
+                WHERE pi.name ILIKE :name AND 
+                pi.type ILIKE :part_type AND up.quantity > 0
                 ORDER BY {order_clause}
                 LIMIT :page_size OFFSET :offset
             """
