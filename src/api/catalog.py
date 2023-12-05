@@ -324,3 +324,157 @@ def add_to_user_catalog(parts: Parts):
             return {"status": "success", "message": "Items added/updated in user's catalog"}
     except Exception as e:
         return {"status": "error", "message": "An error occurred: " + str(e)}
+    
+@router.post("/search_user_catalog", tags=["catalog"])
+def search_user_catalog(
+    search_part: SearchPart,
+    part_type: PartType = Query(None, title="Part Type", description="Filter by part type"),
+    search_page: int = Query(1, title="Search Page", description="Page number for search results"),
+    sort_order: str = Query("name", title="Sort Order", description="Order results by 'name' or 'price"),
+):
+    with db.engine.begin() as connection:
+        page_size = 5
+        offset = (search_page - 1) * page_size
+
+        join_conditions = ""
+        specs_columns = ""
+
+        if sort_order not in ["name", "price"]:
+            return "Invalid sort order"
+
+        order_clause = "pi.name" if sort_order == "name" else "(up.dollars + up.cents / 100.0)"
+
+        if part_type == "case":
+            join_conditions = "LEFT JOIN case_specs AS specs ON up.part_id = specs.part_id"
+            specs_columns = """
+                specs.name AS case_name,
+                specs.color,
+                specs.psu,
+                specs.side_panel,
+                specs.external_volume,
+                specs.internal_35_bays
+            """
+        elif part_type == "cpu":
+            join_conditions = "LEFT JOIN cpu_specs AS specs ON up.part_id = specs.part_id"
+            specs_columns = """
+                specs.core_count,
+                specs.core_clock,
+                specs.boost_clock,
+                specs.tdp
+            """
+        elif part_type == "monitor":
+            join_conditions = "LEFT JOIN monitor_specs AS specs ON up.part_id = specs.part_id"
+            specs_columns = """
+                specs.screen_size,
+                specs.resolution,
+                specs.refresh_rate,
+                specs.response_time
+            """
+        elif part_type == "motherboard":
+            join_conditions = "LEFT JOIN motherboard_specs AS specs ON up.part_id = specs.part_id"
+            specs_columns = """
+                specs.socket,
+                specs.form_factor,
+                specs.max_memory,
+                specs.memory_slots
+            """
+        elif part_type == "power_supply":
+            join_conditions = "LEFT JOIN power_supply_specs AS specs ON up.part_id = specs.part_id"
+            specs_columns = """
+                specs.type AS psu_type,
+                specs.efficiency,
+                specs.wattage
+            """
+        elif part_type == "video_card":
+            join_conditions = "LEFT JOIN video_card_specs AS specs ON up.part_id = specs.part_id"
+            specs_columns = """
+                specs.chipset,
+                specs.memory,
+                specs.core_clock AS gpu_core_clock,
+                specs.boost_clock AS gpu_boost_clock
+            """
+        elif part_type == "internal_hard_drive":
+            join_conditions = "LEFT JOIN internal_hard_drive_specs AS specs ON up.part_id = specs.part_id"
+            specs_columns = """
+                specs.capacity,
+                specs.price_per_gb,
+                specs.type AS storage_type,
+                specs.cache,
+                specs.form_factor AS storage_form_factor,
+                specs.interface AS storage_interface
+            """
+
+        sql_user_catalog = sqlalchemy.text(f"""
+            SELECT
+                up.id,
+                up.user_id,
+                up.part_id,
+                pi.name,
+                pi.type,
+                up.quantity,
+                up.dollars + up.cents / 100.0 AS price,
+                {specs_columns}
+            FROM user_parts up
+            JOIN part_inventory pi ON up.part_id = pi.part_id
+            {join_conditions}
+            WHERE LOWER(pi.name) ILIKE LOWER(:name) AND 
+            LOWER(pi.type) ILIKE LOWER(:part_type) AND up.quantity > 0
+            ORDER BY {order_clause}
+            LIMIT :page_size OFFSET :offset
+        """)
+
+        result_user_catalog = connection.execute(sql_user_catalog, {
+            'name': '%' + search_part.name + '%',
+            'part_type': '%' + part_type + '%',
+            'page_size': page_size,
+            'offset': offset
+        })
+
+        rows_user_catalog = result_user_catalog.mappings().all()
+        part_info_list = []
+
+        for row_dict in rows_user_catalog:
+            part_info = dict(row_dict)
+            part_info_list.append(part_info)
+
+        response = {"user_catalog": part_info_list}
+
+        if search_page > 1:
+            response["previous"] = search_page - 1
+
+        if len(rows_user_catalog) == page_size:
+            next_offset = offset + page_size
+
+            next_query = f"""
+                SELECT
+                    up.part_id,
+                    pi.name,
+                    pi.type,
+                    up.quantity,
+                    up.dollars + up.cents / 100.0 AS price,
+                    {specs_columns}
+                FROM user_parts up
+                JOIN part_inventory pi ON up.part_id = pi.part_id
+                {join_conditions}
+                WHERE LOWER(pi.name) ILIKE LOWER(:name) AND 
+                LOWER(pi.type) ILIKE LOWER(:part_type) AND up.quantity > 0
+                ORDER BY {order_clause}
+                LIMIT :page_size OFFSET :offset
+            """
+
+            next_result = connection.execute(sqlalchemy.text(next_query), {
+                'name': '%' + search_part.name + '%',
+                'part_type': '%' + part_type + '%',
+                'page_size': page_size,
+                'offset': next_offset
+            })
+
+            next_rows = next_result.mappings().all()
+
+            if next_rows:
+                response["next"] = search_page + 1
+
+        if not part_info_list:
+            return "No items found in user catalog"
+
+        return response
