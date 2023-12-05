@@ -447,7 +447,9 @@ def add_carts_and_cart_items(num_carts):
 
     with engine.begin() as conn:
         print("adding carts and cart_items")
-        for _ in range(num_carts):
+        for i in range(num_carts):
+            if (i % 100 == 0):
+                print(i)
             user_id = random.choice(user_ids)[0]
 
             cart_id = conn.execute(sqlalchemy.text("""
@@ -472,6 +474,7 @@ def add_carts_and_cart_items(num_carts):
             """), {"num_items": num_cart_items}).fetchall()
 
             for _ in range(num_cart_items):
+                i += 1
                 user_item = fake.boolean()
 
                 if user_item and user_parts_info:
@@ -500,7 +503,9 @@ def add_pc_templates_and_parts(num_templates):
 
     with engine.begin() as conn:
         print("adding pc_templates and pc_template_parts")
-        for _ in range(num_templates):
+        for i in range(num_templates):
+            if (i % 100 == 0):
+                print(i)
             user_id = random.choice(user_ids)[0]
 
             template_id = conn.execute(sqlalchemy.text("""
@@ -511,6 +516,7 @@ def add_pc_templates_and_parts(num_templates):
             num_template_parts = fake.random_int(min=1, max=3)
 
             for _ in range(num_template_parts):
+                i += 1
                 user_part = fake.boolean()
 
                 if user_part:
@@ -562,8 +568,8 @@ def main():
         "add_power_supply_specs": 100000,
         "add_video_card_specs": 100000,
         "add_user_parts": 100000,
-        "add_carts_and_cart_items": 100000,
-        "add_pc_templates_and_parts": 100000
+        "add_carts_and_cart_items": 100,
+        "add_pc_templates_and_parts": 100
     }
 
     processes = []
@@ -600,4 +606,6 @@ def main():
             process.join()
 
 if __name__ == "__main__":
-    main()
+    for _ in range(100):
+        add_carts_and_cart_items(1000)
+        add_pc_templates_and_parts(1000)
