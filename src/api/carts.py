@@ -126,11 +126,14 @@ def checkout(cart_id: int):
                     .params(part_id=item.part_id, quantity=item.quantity)
                 )
 
+            cost = item.price * item.quantity
+            dollars, cents = divmod(int(cost * 100), 100)
+
             connection.execute(
                 sqlalchemy.text(
-                    "INSERT INTO purchase_history (user_id, part_id, payment, user_item) "
-                    "VALUES ((SELECT user_id FROM carts WHERE cart_id = :cart_id), :part_id, :payment, :user_item)")
-                .params(cart_id=cart_id, part_id=item.part_id, payment=item.price * item.quantity, user_item = item.user_item)
+                    "INSERT INTO purchase_history (user_id, part_id, user_item, dollars, cents) "
+                    "VALUES ((SELECT user_id FROM carts WHERE cart_id = :cart_id), :part_id, :user_item, :dollars, :cents)")
+                .params(cart_id=cart_id, part_id=item.part_id, user_item = item.user_item, dollars=dollars, cents=cents)
             )
 
             total_item_bought += item.quantity
