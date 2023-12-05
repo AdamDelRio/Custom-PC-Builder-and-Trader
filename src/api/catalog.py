@@ -188,27 +188,32 @@ def add_to_user_catalog(parts: Parts):
                 """
             ).params(user_id=parts.user_id, part_id=parts.part_id)).fetchone()
 
+            dollars = int(parts.price)
+            cents = int(round(parts.price * 100)) - dollars * 100
+
             if existing_quantity:
                 connection.execute(sqlalchemy.text(
                     """
                     UPDATE user_parts 
-                    SET quantity = quantity + :quantity, price = :price
+                    SET quantity = quantity + :quantity, dollars = :dollars, cents = :cents
                     WHERE user_id = :user_id AND part_id = :part_id
                     """
                 ).params(user_id=parts.user_id, 
                             part_id=parts.part_id, 
                             quantity=parts.quantity, 
-                            price=parts.price))
+                            dollars=dollars,
+                            cents=cents))
             else:
                 connection.execute(sqlalchemy.text(
                     """
-                    INSERT INTO user_parts (user_id, part_id, quantity, price)
-                    VALUES (:user_id, :part_id, :quantity, :price)
+                    INSERT INTO user_parts (user_id, part_id, quantity, dollars, cents)
+                    VALUES (:user_id, :part_id, :quantity, :dollars, :cents)
                     """
                 ).params(user_id=parts.user_id, 
                             part_id=parts.part_id, 
                             quantity=parts.quantity, 
-                            price=parts.price))
+                            dollars=dollars,
+                            cents=cents))
 
             return {"status": "success", "message": "Items added/updated in user's catalog"}
     except Exception as e:
