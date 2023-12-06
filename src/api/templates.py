@@ -19,6 +19,10 @@ def create_template(new_template:NewTemplate):
     Create a new custom PC Template
     """
     with db.engine.begin() as connection:
+        #check if user exists
+        user_exists = connection.execute(sqlalchemy.text("SELECT EXISTS (SELECT 1 FROM users where id = :user_id)"), {"user_id": new_template.user_id}).fetchone()
+        if not user_exists[0]:
+            return "User does not exist"
         temp_id = connection.execute(sqlalchemy.text("INSERT INTO PC_TEMPLATES (user_id) "
                                                      "VALUES (:user_id) "
                                                      "RETURNING id"),
