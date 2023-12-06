@@ -175,16 +175,17 @@ def view_template(template_id: int):
         parts_data = connection.execute(
             sqlalchemy.text("""
                 SELECT t.part_id,
-                       p.name,
-                       p.type,
+                       COALESCE(upi.name, p.name) AS name,
+                       COALESCE(upi.type, p.type) AS type,
                        t.quantity,
                        CASE
                            WHEN t.user_part THEN up.dollars + up.cents / 100.0
                            ELSE p.dollars + p.cents / 100.0
                        END AS price
                 FROM pc_template_parts t
-                JOIN part_inventory p ON t.part_id = p.part_id
-                LEFT JOIN user_parts up ON t.part_id = up.part_id AND t.user_part
+                LEFT JOIN user_parts up ON t.part_id = up.id AND t.user_part
+                LEFT JOIN part_inventory upi ON up.part_id = upi.part_id AND t.user_part
+                LEFT JOIN part_inventory p ON t.part_id = p.part_id AND NOT t.user_part
                 WHERE t.template_id = :template_id
             """),
             {"template_id": template_id}
