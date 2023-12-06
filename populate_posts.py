@@ -17,7 +17,6 @@ def database_connection_url():
     DB_NAME: str = os.environ.get("POSTGRES_DB")
     return f"postgresql://{DB_USER}:{DB_PASSWD}@{DB_SERVER}:{DB_PORT}/{DB_NAME}"
 
-
 def edit_prices():
     engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
 

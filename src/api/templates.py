@@ -26,6 +26,21 @@ def create_template(new_template:NewTemplate):
         
         return {"Template_Id": temp_id}
     
+class RemoveTemplate(BaseModel):
+    user_id:int
+#add endpoint to remove template
+@router.post('/template/remove/{template_id}')
+def remove_template(template_id, remove_template: RemoveTemplate):
+    """
+    Removes a PC Template
+    """
+    with db.engine.begin() as connection:
+        if connection.execute(sqlalchemy.text("SELECT EXISTS (SELECT 1 FROM pc_templates where id = :template_id and user_id = :user_id)"), {"template_id": template_id, "user_id": remove_template.user_id}) == True:
+            connection.execute(sqlalchemy.text("DELETE from pc_templates where user_id = :user_id and template_id = :template_id CASCADE"), {"user_id": remove_template.user_id, "template_id":template_id})
+            return f"Removed template {template_id} for user {remove_template.user_id}"
+        else:
+            return "No existing template"
+    
 class TemplatePart(BaseModel):
     quantity:int
     user_item : bool
