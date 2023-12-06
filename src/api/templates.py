@@ -33,7 +33,9 @@ class TemplatePart(BaseModel):
 @router.post('/{user_id}/{template_id}/items/{part_id}')
 def add_item_to_template(user_id: int, template_id: int, part_id: int, template_part: TemplatePart):
     """
-    Add a PC template part to an existing template
+    Add a PC template part to an existing template.
+
+    REMEMBER: If adding a user_item, use the id instead of the part_id
     """
 
     with db.engine.begin() as connection:
