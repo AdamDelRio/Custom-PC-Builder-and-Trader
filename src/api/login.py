@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from pydantic import EmailStr
 from src.api import auth
 from sqlalchemy.exc import IntegrityError
 from src import database as db
@@ -11,7 +12,7 @@ router = APIRouter(
 )
 
 @router.post("/create")
-def sign_up(username: str, email: str):
+def sign_up(username: str, email: EmailStr):
     """
     Sign up for the site.
     """

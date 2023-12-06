@@ -439,14 +439,16 @@ def add_carts_and_cart_items(num_carts):
     engine = sqlalchemy.create_engine(database_connection_url(), use_insertmanyvalues=True)
 
     fake = Faker()
-    
-    # Fetch all user IDs
+
+    # Fetch all user IDs and part information
     with engine.connect() as conn:
         user_ids = conn.execute(sqlalchemy.text("SELECT id FROM users")).fetchall()
 
     with engine.begin() as conn:
         print("adding carts and cart_items")
-        for _ in range(num_carts):
+        for i in range(num_carts):
+            if (i % 100 == 0):
+                print(i)
             user_id = random.choice(user_ids)[0]
 
             cart_id = conn.execute(sqlalchemy.text("""
@@ -454,36 +456,32 @@ def add_carts_and_cart_items(num_carts):
                 VALUES (:user_id) RETURNING cart_id;
             """), {"user_id": user_id}).fetchone()[0]
 
-            num_cart_items = fake.random_int(min=1, max=10)
+            num_cart_items = fake.random_int(min=1, max=3)
+
+            # Fetch a batch of random user parts and part inventory information
+            user_parts_info = conn.execute(sqlalchemy.text("""
+                SELECT * FROM user_parts 
+                WHERE user_id = :user_id 
+                AND quantity > 0
+                ORDER BY RANDOM() LIMIT :num_items;
+            """), {"user_id": user_id, "num_items": num_cart_items}).fetchall()
+
+            part_inventory_info = conn.execute(sqlalchemy.text("""
+                SELECT * FROM part_inventory 
+                WHERE quantity > 0
+                ORDER BY RANDOM() LIMIT :num_items;
+            """), {"num_items": num_cart_items}).fetchall()
 
             for _ in range(num_cart_items):
+                i += 1
                 user_item = fake.boolean()
 
-                if user_item:
-                    user_part_info = conn.execute(sqlalchemy.text("""
-                        SELECT * FROM user_parts 
-                        WHERE user_id = :user_id 
-                        AND quantity > 0
-                        ORDER BY RANDOM() LIMIT 1;
-                    """), {"user_id": user_id}).fetchone()
-
-                    part_info = user_part_info or conn.execute(sqlalchemy.text("""
-                        SELECT * FROM part_inventory 
-                        WHERE quantity > 0
-                        ORDER BY RANDOM() LIMIT 1;
-                    """)).fetchone()
+                if user_item and user_parts_info:
+                    part_info = user_parts_info.pop()
                 else:
-                    part_info = conn.execute(sqlalchemy.text("""
-                        SELECT * FROM part_inventory 
-                        WHERE quantity > 0
-                        ORDER BY RANDOM() LIMIT 1;
-                    """)).fetchone()
+                    part_info = part_inventory_info.pop()
 
-                if part_info and part_info.quantity > 0:
-                    part_id, quantity = part_info.part_id, fake.random_int(min=1, max=part_info.quantity)
-                else:
-                    # Handle the case when the part inventory is empty
-                    part_id, quantity = None, 0
+                part_id, quantity = part_info.part_id, fake.random_int(min=1, max=part_info.quantity)
 
                 checked_out = fake.boolean()
 
@@ -491,13 +489,6 @@ def add_carts_and_cart_items(num_carts):
                     INSERT INTO cart_items (cart_id, user_item, part_id, quantity, checked_out) 
                     VALUES (:cart_id, :user_item, :part_id, :quantity, :checked_out);
                 """), {"cart_id": cart_id, "user_item": user_item, "part_id": part_id, "quantity": quantity, "checked_out": checked_out})
-
-
-
-
-
-
-
 
 
 def add_pc_templates_and_parts(num_templates):
@@ -511,7 +502,9 @@ def add_pc_templates_and_parts(num_templates):
 
     with engine.begin() as conn:
         print("adding pc_templates and pc_template_parts")
-        for _ in range(num_templates):
+        for i in range(num_templates):
+            if (i % 100 == 0):
+                print(i)
             user_id = random.choice(user_ids)[0]
 
             template_id = conn.execute(sqlalchemy.text("""
@@ -519,9 +512,10 @@ def add_pc_templates_and_parts(num_templates):
                 VALUES (:user_id) RETURNING id;
             """), {"user_id": user_id}).fetchone()[0]
 
-            num_template_parts = fake.random_int(min=1, max=5)
+            num_template_parts = fake.random_int(min=1, max=3)
 
             for _ in range(num_template_parts):
+                i += 1
                 user_part = fake.boolean()
 
                 if user_part:
@@ -573,26 +567,27 @@ def main():
         "add_power_supply_specs": 100000,
         "add_video_card_specs": 100000,
         "add_user_parts": 100000,
-        "add_carts_and_cart_items": 100000,
-        "add_pc_templates_and_parts": 100000
+        "add_carts_and_cart_items": 100,
+        "add_pc_templates_and_parts": 100
     }
 
     processes = []
 
     # Define task groups based on dependencies
     task_groups = [
-        [add_users,
-         add_cpu_specs],
-        [add_internal_hard_drive_specs],
-        [add_monitor_specs],
-        [add_motherboard_specs],
-        [add_power_supply_specs],
-        [add_video_card_specs],
-        [add_case_specs],
-        [add_user_parts],
+        # [add_users,
+        #  add_cpu_specs],
+        # [add_internal_hard_drive_specs],
+        # [add_monitor_specs],
+        # [add_motherboard_specs],
+        # [add_power_supply_specs],
+        # [add_video_card_specs],
+        # [add_case_specs],
+        # [add_user_parts],
+        [add_carts_and_cart_items],
         
         [
-            add_carts_and_cart_items,
+            
             add_pc_templates_and_parts
             
         ]
@@ -610,4 +605,6 @@ def main():
             process.join()
 
 if __name__ == "__main__":
-    main()
+    for _ in range(100):
+        add_carts_and_cart_items(1000)
+        add_pc_templates_and_parts(1000)
