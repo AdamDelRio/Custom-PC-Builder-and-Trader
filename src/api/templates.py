@@ -53,13 +53,30 @@ def remove_item_from_template(template_id, part_id, template_part:TemplatePart):
     Remove a specific item from a template
     """
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text("DELETE FROM pc_template_parts WHERE template_id = :template_id and part_id = :part_id and quantity = :quantity and user_part = :user_part"), 
-                           parameters= {"template_id":template_id,
+        row = connection.execute(sqlalchemy.text("SELECT quantity "
+                                 "FROM pc_template_parts "
+                                 "WHERE template_id = :template_id and part_id = :part_id and user_part = :user_part"), 
+                                 parameters= {"template_id":template_id,
                                         "part_id":part_id,
                                         "quantity": template_part.quantity,
-                                        "user_part":template_part.user_item})
-    
-        return "item removed from template"
+                                        "user_part":template_part.user_item}).fetchone()
+        if row is not None:
+            if template_part.quantity >= row[0]:
+                connection.execute(sqlalchemy.text("DELETE FROM pc_template_parts WHERE template_id = :template_id and part_id = :part_id and quantity = :quantity and user_part = :user_part"), 
+                                parameters= {"template_id":template_id,
+                                                "part_id":part_id,
+                                                "quantity": template_part.quantity,
+                                                "user_part":template_part.user_item})
+            else: 
+                connection.execute(sqlalchemy.text("UPDATE pc_template_parts quantity SET quantity = quantity - :quantity "  
+                                                   "WHERE template_id = :template_id and part_id = :part_id and user_part = :user_part"), 
+                                parameters= {"template_id":template_id,
+                                                "part_id":part_id,
+                                                "quantity": template_part.quantity,
+                                                "user_part":template_part.user_item})
+            return "Item removed from template"
+        
+        return "Item never existed in template. Double check part_id and template_id"
                                                                                                                                               
 
 
