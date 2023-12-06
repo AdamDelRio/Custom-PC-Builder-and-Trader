@@ -31,7 +31,7 @@ class TemplatePart(BaseModel):
     user_item : bool
 
 @router.post('/{user_id}/{template_id}/items/{part_id}')
-def add_item_to_template(user_id: int, template_id, part_id, template_part: TemplatePart):
+def add_item_to_template(user_id: int, template_id: int, part_id: int, template_part: TemplatePart):
     """
     Add a PC template part to an existing template
     """
@@ -48,7 +48,7 @@ def add_item_to_template(user_id: int, template_id, part_id, template_part: Temp
         return "Item added to template"
         
 @router.post('/{template_id}/removeitem/{part_id}')
-def remove_item_from_template(template_id, part_id, template_part:TemplatePart):
+def remove_item_from_template(template_id: int, part_id: int, template_part:TemplatePart):
     """
     Remove a specific item from a template
     """
@@ -89,7 +89,7 @@ class NewCart(BaseModel):
 
 
 @router.post('/{template_id}/cart/new')
-def create_cart_from_template(template_id, new_cart:NewCart):
+def create_cart_from_template(template_id: int, new_cart:NewCart):
     """
     Convert a PC template into a cart to purchase all items in the template
     """
