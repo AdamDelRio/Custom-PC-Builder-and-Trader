@@ -45,7 +45,7 @@ def add_item_to_template(user_id, template_id, part_id, template_part: TemplateP
                                                "quantity" :template_part.quantity,
                                                "user_part": template_part.user_item
                                            })
-        return temp_part_id
+        return "Item added to template"
         
 @router.post('/{template_id}/removeitem/{part_id}')
 def remove_item_from_template(template_id, part_id, template_part:TemplatePart):
