@@ -35,8 +35,9 @@ def remove_template(template_id, remove_template: RemoveTemplate):
     Removes a PC Template
     """
     with db.engine.begin() as connection:
-        if connection.execute(sqlalchemy.text("SELECT EXISTS (SELECT 1 FROM pc_templates where id = :template_id and user_id = :user_id)"), {"template_id": template_id, "user_id": remove_template.user_id}).fetchone() == True:
-            connection.execute(sqlalchemy.text("DELETE from pc_templates where user_id = :user_id and id = :template_id CASCADE"), {"user_id": remove_template.user_id, "template_id":template_id})
+        result = connection.execute(sqlalchemy.text("SELECT EXISTS (SELECT 1 FROM pc_templates where id = :template_id and user_id = :user_id)"), {"template_id": template_id, "user_id": remove_template.user_id}).fetchone()
+        if result[0]:
+            connection.execute(sqlalchemy.text("DELETE from pc_templates where user_id = :user_id and id = :template_id"), {"user_id": remove_template.user_id, "template_id":template_id})
             return f"Removed template {template_id} for user {remove_template.user_id}"
         else:
             return "No existing template"
