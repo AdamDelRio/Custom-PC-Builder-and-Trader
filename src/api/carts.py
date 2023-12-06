@@ -128,7 +128,7 @@ def checkout(cart_id: int):
 
             cost = item.price * item.quantity
             dollars = int(cost)
-            cents = int(round(cost * 100)) - dollars * 100
+            cents = (cost - dollars) * 100
 
             connection.execute(
                 sqlalchemy.text(
