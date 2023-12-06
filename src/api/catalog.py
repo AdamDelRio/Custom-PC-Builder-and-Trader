@@ -4,14 +4,11 @@ from src import database as db
 from fastapi import APIRouter
 from fastapi import HTTPException
 from fastapi import Query
-from typing import List
+from typing import List, Optional
 from enum import Enum
 
 router = APIRouter()
 
-
-class SearchPart(BaseModel):
-    name: str
 
 class PartType(str, Enum):
     case = "case"
@@ -22,15 +19,17 @@ class PartType(str, Enum):
     video_card = "video_card"
     internal_hard_drive = "internal_hard_drive"
 
-@router.post("/catalog/search", tags=["catalog"])
+@router.get("/catalog/search", tags=["catalog"])
 def search_catalog(
-    search_part: SearchPart,
+    search_part: Optional[str] = Query(None, title="Search Part", description="Filter by part name or keyword of name"),
     part_type: PartType = Query(None, title="Part Type", description="Filter by part type"),
     search_page: int = Query(1, title="Search Page", description="Page number for search results"),
     sort_order: str = Query("name", title="Sort Order", description="Order results by 'name' or 'price'"),
     ):
     if not part_type:
         part_type = ""
+    if not search_part:
+        search_part = ""
     with db.engine.begin() as connection:
         page_size = 5
         offset = (search_page - 1) * page_size
@@ -119,7 +118,7 @@ def search_catalog(
             LIMIT :page_size OFFSET :offset
         """)
 
-        result = connection.execute(sql, {'name': '%' + search_part.name + '%', 'part_type': '%' + part_type + '%', 'page_size': page_size, 'offset': offset})
+        result = connection.execute(sql, {'name': '%' + search_part + '%', 'part_type': '%' + part_type + '%', 'page_size': page_size, 'offset': offset})
         rows = result.mappings().all()
 
         part_info_list = []
@@ -142,7 +141,7 @@ def search_catalog(
                 LIMIT 1 OFFSET :offset
                 """
 
-            next_result = connection.execute(sqlalchemy.text(next_query), {'name': '%' + search_part.name + '%', 'part_type': '%' + part_type + '%', 'offset': next_offset})
+            next_result = connection.execute(sqlalchemy.text(next_query), {'name': '%' + search_part + '%', 'part_type': '%' + part_type + '%', 'offset': next_offset})
             next_rows = next_result.fetchone()
 
             if next_rows:
@@ -211,16 +210,17 @@ def add_to_user_catalog(parts: Parts):
     except Exception as e:
         return {"status": "error", "message": "An error occurred: " + str(e)}
     
-@router.post("/catalog/search_user_catalog", tags=["catalog"])
+@router.get("/catalog/search_user_catalog", tags=["catalog"])
 def search_user_catalog(
-    search_part: SearchPart,
+    search_part: Optional[str] = Query(None, title="Search Part", description="Filter by part name or keyword of name"),
     part_type: PartType = Query(None, title="Part Type", description="Filter by part type"),
     search_page: int = Query(1, title="Search Page", description="Page number for search results"),
     sort_order: str = Query("name", title="Sort Order", description="Order results by 'name' or 'price"),
 ):
     if not part_type:
         part_type = ""
-
+    if not search_part:
+        search_part = ""
     with db.engine.begin() as connection:
         page_size = 5
         offset = (search_page - 1) * page_size
@@ -313,7 +313,7 @@ def search_user_catalog(
         """)
 
         result_user_catalog = connection.execute(sql_user_catalog, {
-            'name': '%' + search_part.name + '%',
+            'name': '%' + search_part + '%',
             'part_type': '%' + part_type + '%',
             'page_size': page_size,
             'offset': offset
@@ -344,7 +344,7 @@ def search_user_catalog(
             """
 
             next_result = connection.execute(sqlalchemy.text(next_query), {
-                'name': '%' + search_part.name + '%',
+                'name': '%' + search_part + '%',
                 'part_type': '%' + part_type + '%',
                 'offset': next_offset
             })
