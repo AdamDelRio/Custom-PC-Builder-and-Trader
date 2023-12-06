@@ -83,7 +83,7 @@ def add_item_to_template(user_id: int, template_id: int, part_id: int, template_
                                                             quantity = template_part.quantity,
                                                             user_item = template_part.user_item))
 
-                        return "Item added to template"
+                    return "Item added to template"
                 else:
                         return "Item not found or insufficient quantity"
 
