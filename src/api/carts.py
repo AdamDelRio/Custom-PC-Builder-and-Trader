@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from src.api import auth
 from src import database as db
 import sqlalchemy
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 router = APIRouter(
     prefix="/carts",
     tags=["cart"],
@@ -81,71 +82,80 @@ def set_item_quantity(cart_id: int, part_id: int, cart_item: CartItem):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int):
     """ """
-    with db.engine.begin() as connection:
-        cart_items = connection.execute(
-            sqlalchemy.text(
-                """
-                SELECT
-                    cart_items.part_id,
-                    cart_items.quantity,
-                    CASE
-                        WHEN cart_items.user_item THEN user_parts.dollars + user_parts.cents / 100.0
-                        ELSE part_inventory.dollars + part_inventory.cents / 100.0
-                    END as price,
-                    cart_items.user_item
-                FROM
-                    cart_items
-                LEFT JOIN
-                    part_inventory ON cart_items.part_id = part_inventory.part_id
-                LEFT JOIN
-                    user_parts ON cart_items.part_id = user_parts.id
-                WHERE
-                    cart_items.cart_id = :cart_id AND
-                    cart_items.checked_out = false
-                 """
-                )
-            .params(cart_id=cart_id)
-        ).fetchall()
+    try:
+        with db.engine.begin() as connection:
+            cart_items = connection.execute(
+                sqlalchemy.text(
+                    """
+                    SELECT
+                        cart_items.part_id,
+                        cart_items.quantity,
+                        CASE
+                            WHEN cart_items.user_item THEN user_parts.dollars + user_parts.cents / 100.0
+                            ELSE part_inventory.dollars + part_inventory.cents / 100.0
+                        END as price,
+                        cart_items.user_item
+                    FROM
+                        cart_items
+                    LEFT JOIN
+                        part_inventory ON cart_items.part_id = part_inventory.part_id
+                    LEFT JOIN
+                        user_parts ON cart_items.part_id = user_parts.id
+                    WHERE
+                        cart_items.cart_id = :cart_id AND
+                        cart_items.checked_out = false
+                    """
+                    )
+                .params(cart_id=cart_id)
+            ).fetchall()
 
-        total_item_bought = 0
-        total_dollars_paid = 0
-        for item in cart_items:
-            if item.user_item:
+            total_item_bought = 0
+            total_dollars_paid = 0
+            for item in cart_items:
+                if item.user_item:
+                    connection.execute(
+                        sqlalchemy.text(
+                            "UPDATE user_parts "
+                            "SET quantity = quantity - :quantity "
+                            "WHERE id = :part_id")
+                        .params(part_id=item.part_id, quantity=item.quantity)
+                    )
+                else:
+                    connection.execute(
+                        sqlalchemy.text("UPDATE part_inventory "
+                                        "SET quantity = quantity - :quantity "
+                                        "WHERE part_id = :part_id")
+                        .params(part_id=item.part_id, quantity=item.quantity)
+                    )
+
+                cost = item.price * item.quantity
+                dollars = int(cost)
+                cents = (cost - dollars) * 100
+
                 connection.execute(
                     sqlalchemy.text(
-                        "UPDATE user_parts "
-                        "SET quantity = quantity - :quantity "
-                        "WHERE id = :part_id")
-                    .params(part_id=item.part_id, quantity=item.quantity)
-                )
-            else:
-                connection.execute(
-                    sqlalchemy.text("UPDATE part_inventory "
-                                    "SET quantity = quantity - :quantity "
-                                    "WHERE part_id = :part_id")
-                    .params(part_id=item.part_id, quantity=item.quantity)
+                        "INSERT INTO purchase_history (user_id, part_id, user_item, dollars, cents) "
+                        "VALUES ((SELECT user_id FROM carts WHERE cart_id = :cart_id), :part_id, :user_item, :dollars, :cents)")
+                    .params(cart_id=cart_id, part_id=item.part_id, user_item = item.user_item, dollars=dollars, cents=cents)
                 )
 
-            cost = item.price * item.quantity
-            dollars = int(cost)
-            cents = (cost - dollars) * 100
+                total_item_bought += item.quantity
+                total_dollars_paid += item.price * item.quantity
 
             connection.execute(
-                sqlalchemy.text(
-                    "INSERT INTO purchase_history (user_id, part_id, user_item, dollars, cents) "
-                    "VALUES ((SELECT user_id FROM carts WHERE cart_id = :cart_id), :part_id, :user_item, :dollars, :cents)")
-                .params(cart_id=cart_id, part_id=item.part_id, user_item = item.user_item, dollars=dollars, cents=cents)
+                sqlalchemy.text("UPDATE cart_items SET checked_out = true WHERE cart_id = :cart_id")
+                .params(cart_id=cart_id)
             )
 
-            total_item_bought += item.quantity
-            total_dollars_paid += item.price * item.quantity
-
-        connection.execute(
-            sqlalchemy.text("UPDATE cart_items SET checked_out = true WHERE cart_id = :cart_id")
-            .params(cart_id=cart_id)
-        )
-
-        return {
-            "total_items_bought": total_item_bought,
-            "total_dollars_paid": total_dollars_paid
-        }
+            return {
+                "total_items_bought": total_item_bought,
+                "total_dollars_paid": total_dollars_paid
+            }
+    except IntegrityError as e:
+        return {"status": "error", "message": "Database integrity error: " + str(e.orig)}
+    except ValueError as e:
+        return {"status": "error", "message": "Value error: " + str(e)}
+    except SQLAlchemyError as e:
+        return {"status": "error", "message": "Database error: " + str(e.orig)}
+    except Exception as e:
+        return {"status": "error", "message": "An unexpected error occurred: " + str(e)}
