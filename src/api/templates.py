@@ -1,5 +1,5 @@
 import sqlalchemy
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from src.api import auth
 from pydantic import BaseModel
 from src import database as db
@@ -124,3 +124,29 @@ def create_cart_from_template(template_id, new_cart:NewCart):
                                             parameters= dict(cart_id = cart_id,
                                                              template_id = template_id))
         return {"cart_id": cart_id}
+    
+@router.get('/{template_id}/view_template')
+def view_template(template_id: int):
+    """
+    View details of a specific PC template
+    """
+    with db.engine.begin() as connection:
+        parts_data = connection.execute(
+            sqlalchemy.text("""
+                SELECT p.part_id, p.name, p.type, t.quantity, p.dollars, p.cents
+                FROM pc_template_parts t
+                JOIN part_inventory p ON t.part_id = p.part_id
+                WHERE t.template_id = :template_id
+            """),
+            {"template_id": template_id}
+        ).mappings().all()
+
+        if not parts_data:
+            raise HTTPException(status_code=404, detail="Template not found or no parts in template")
+
+        parts_info_list = []
+        for part_data in parts_data:
+            part_info = dict(part_data)
+            parts_info_list.append(part_info)
+
+        return {"template_id": template_id, "parts": parts_info_list}
