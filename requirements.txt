@@ -8,3 +8,4 @@ pre-commit
 uvicorn
 Faker
 numpy
+pydantic[email]
