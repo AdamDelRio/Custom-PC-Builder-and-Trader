@@ -64,28 +64,27 @@ def add_item_to_template(user_id: int, template_id: int, part_id: int, template_
                 },
             )
         else:
-             with db.engine.begin() as connection:
-                inventory_table = "user_parts" if template_part.user_item else "part_inventory"
-                inventory_id_column = "id" if template_part.user_item else "part_id"
+            inventory_table = "user_parts" if template_part.user_item else "part_inventory"
+            inventory_id_column = "id" if template_part.user_item else "part_id"
 
-                inventory_item = connection.execute(
-                                                    sqlalchemy.text(
-                                                    f"SELECT quantity FROM {inventory_table} WHERE {inventory_id_column} = :part_id"
-                                                    ).params(part_id=part_id)
-                                                    ).fetchone()
+            inventory_item = connection.execute(
+                                                sqlalchemy.text(
+                                                f"SELECT quantity FROM {inventory_table} WHERE {inventory_id_column} = :part_id"
+                                                ).params(part_id=part_id)
+                                                ).fetchone()
 
-                if inventory_item and inventory_item.quantity >= template_part.quantity:
-                    connection.execute(sqlalchemy.text("INSERT INTO pc_template_parts (template_id, quantity, part_id, user_part, user_id) " 
-                                            "VALUES (:template_id, :quantity, :part_id, :user_item, :user_id)"),
-                                            parameters= dict(template_id = template_id,
-                                                            user_id = user_id,
-                                                            part_id = part_id,
-                                                            quantity = template_part.quantity,
-                                                            user_item = template_part.user_item))
+            if inventory_item and inventory_item.quantity >= template_part.quantity:
+                connection.execute(sqlalchemy.text("INSERT INTO pc_template_parts (template_id, quantity, part_id, user_part, user_id) " 
+                                        "VALUES (:template_id, :quantity, :part_id, :user_item, :user_id)"),
+                                        parameters= dict(template_id = template_id,
+                                                        user_id = user_id,
+                                                        part_id = part_id,
+                                                        quantity = template_part.quantity,
+                                                        user_item = template_part.user_item))
 
-                    return "Item added to template"
-                else:
-                        return "Item not found or insufficient quantity"
+                return "Item added to template"
+            else:
+                return "Item not found or insufficient quantity"
 
         return "Item added to template"
 
