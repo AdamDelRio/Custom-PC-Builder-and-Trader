@@ -26,10 +26,23 @@ def create_template(new_template:NewTemplate):
         
         return {"Template_Id": temp_id}
     
+@router.post('/template/viewall')
+def view_all_templates():
+    """
+    View all PC Templates
+    """
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("SELECT user_id, id as template_id FROM pc_templates")).mappings().all()
+        #should be [{user_id: int, template_id: int}]
+        if len(result) == 0:
+            return "No existing templates"
+        return result
+    
+
 class RemoveTemplate(BaseModel):
     user_id:int
 #add endpoint to remove template
-@router.post('/template/remove/{template_id}')
+@router.delete('/template/remove/{template_id}')
 def remove_template(template_id, remove_template: RemoveTemplate):
     """
     Removes a PC Template
