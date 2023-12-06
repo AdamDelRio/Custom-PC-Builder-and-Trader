@@ -19,13 +19,19 @@ class PartType(str, Enum):
     video_card = "video_card"
     internal_hard_drive = "internal_hard_drive"
 
+class SortOrder(str, Enum):
+    name = "name"
+    price = "price"
+
 @router.get("/catalog/search", tags=["catalog"])
 def search_catalog(
     search_part: Optional[str] = Query(None, title="Search Part", description="Filter by part name or keyword of name"),
     part_type: PartType = Query(None, title="Part Type", description="Filter by part type"),
     search_page: int = Query(1, title="Search Page", description="Page number for search results"),
-    sort_order: str = Query("name", title="Sort Order", description="Order results by 'name' or 'price'"),
+    sort_order: SortOrder = Query(SortOrder.name, title="Sort Order", description="Order results by 'name' or 'price'"),
     ):
+    if search_page < 1:
+        return "search_page must be a positive integer"
     if not part_type:
         part_type = ""
     if not search_part:
@@ -36,9 +42,6 @@ def search_catalog(
 
         join_conditions = ""
         specs_columns = ""
-
-        if sort_order not in ["name", "price"]:
-            return "Invalid sort order"
 
         order_clause = "part_inventory.name" if sort_order == "name" else "(part_inventory.dollars + part_inventory.cents / 100.0)"
 
@@ -215,8 +218,10 @@ def search_user_catalog(
     search_part: Optional[str] = Query(None, title="Search Part", description="Filter by part name or keyword of name"),
     part_type: PartType = Query(None, title="Part Type", description="Filter by part type"),
     search_page: int = Query(1, title="Search Page", description="Page number for search results"),
-    sort_order: str = Query("name", title="Sort Order", description="Order results by 'name' or 'price"),
+    sort_order: SortOrder = Query(SortOrder.name, title="Sort Order", description="Order results by 'name' or 'price'"),
 ):
+    if search_page < 1:
+        return "search_page must be a positive integer"
     if not part_type:
         part_type = ""
     if not search_part:
@@ -227,9 +232,6 @@ def search_user_catalog(
 
         join_conditions = ""
         specs_columns = ""
-
-        if sort_order not in ["name", "price"]:
-            return "Invalid sort order"
 
         order_clause = "pi.name" if sort_order == "name" else "(up.dollars + up.cents / 100.0)"
 
