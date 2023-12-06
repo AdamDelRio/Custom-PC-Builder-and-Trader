@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from fastapi import Query
 from typing import List, Optional
 from enum import Enum
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 router = APIRouter()
 
@@ -166,15 +167,15 @@ def add_to_user_catalog(parts: Parts):
     """
     Allow a user to add items to their catalog.
     """
-    try:
-        with db.engine.begin() as connection:
-            result = connection.execute(sqlalchemy.text(
-                "SELECT 1 FROM part_inventory WHERE part_id = :part_id"
-            ).params(part_id=parts.part_id)).fetchone()
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(
+            "SELECT 1 FROM part_inventory WHERE part_id = :part_id"
+        ).params(part_id=parts.part_id)).fetchone()
 
-            if not result:
-                raise HTTPException(status_code=404, detail=f"Part ID {parts.part_id} not found in inventory")
+        if not result:
+            raise HTTPException(status_code=404, detail=f"Part ID {parts.part_id} not found in inventory")
 
+        try:
             existing_quantity = connection.execute(sqlalchemy.text(
                 """
                 SELECT quantity FROM user_parts 
@@ -210,8 +211,14 @@ def add_to_user_catalog(parts: Parts):
                             cents=cents))
 
             return {"status": "success", "message": "Items added/updated in user's catalog"}
-    except Exception as e:
-        return {"status": "error", "message": "An error occurred: " + str(e)}
+        except IntegrityError as e:
+            return {"status": "error", "message": "Database integrity error: " + str(e.orig)}
+        except ValueError as e:
+            return {"status": "error", "message": "Value error: " + str(e)}
+        except SQLAlchemyError as e:
+            return {"status": "error", "message": "Database error: " + str(e.orig)}
+        except Exception as e:
+            return {"status": "error", "message": "An unexpected error occurred: " + str(e)}
     
 @router.get("/catalog/search_user_catalog", tags=["catalog"])
 def search_user_catalog(
