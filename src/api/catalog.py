@@ -157,7 +157,7 @@ class Parts(BaseModel):
     user_id: int
     part_id: int
     quantity: int
-    price: int
+    price: float
 
 @router.post("/user_catalog/add", tags=["catalog"])
 def add_to_user_catalog(parts: Parts):
@@ -181,7 +181,7 @@ def add_to_user_catalog(parts: Parts):
             ).params(user_id=parts.user_id, part_id=parts.part_id)).fetchone()
 
             dollars = int(parts.price)
-            cents = int(round(parts.price * 100)) - dollars * 100
+            cents = (parts.price - dollars) * 100
 
             if existing_quantity:
                 connection.execute(sqlalchemy.text(

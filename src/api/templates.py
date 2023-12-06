@@ -31,7 +31,7 @@ class TemplatePart(BaseModel):
     user_item : bool
 
 @router.post('/{user_id}/{template_id}/items/{part_id}')
-def add_item_to_template(user_id, template_id, part_id, template_part: TemplatePart):
+def add_item_to_template(user_id: int, template_id, part_id, template_part: TemplatePart):
     """
     Add a PC template part to an existing template
     """
