@@ -111,13 +111,10 @@ def create_cart_from_template(template_id, new_cart:NewCart):
                                                                                 phone = new_cart.phone)).scalar()
         
         cart_id = connection.execute(sqlalchemy.text("INSERT INTO carts (user_id) "
-                                                     "SELECT customers.id "
-                                                     "FROM pc_templates "
-                                                     "JOIN customers ON customers.user_id = pc_templates.user_id "
-                                                     "WHERE pc_templates.id = :template_id "
+                                                     "VALUES (:cust_id) "
                                                      "RETURNING cart_id"),
-                                                     parameters= dict(template_id = template_id)).scalar()
-        connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, part_id, quantity, user_item)"
+                                                     parameters= dict(cust_id = new_cart.user_id)).scalar()
+        connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, part_id, quantity, user_item) "
                                            "SELECT :cart_id, pc_template_parts.part_id, pc_template_parts.quantity, pc_template_parts.user_part "
                                            "FROM pc_template_parts "
                                            "WHERE pc_template_parts.template_id = :template_id "),
