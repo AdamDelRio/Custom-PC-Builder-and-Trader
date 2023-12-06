@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from fastapi import Query
 from typing import List, Optional
 from enum import Enum
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 router = APIRouter()
 
@@ -174,41 +175,50 @@ def add_to_user_catalog(parts: Parts):
         if not result:
             raise HTTPException(status_code=404, detail=f"Part ID {parts.part_id} not found in inventory")
 
-        existing_quantity = connection.execute(sqlalchemy.text(
-            """
-            SELECT quantity FROM user_parts 
-            WHERE user_id = :user_id AND part_id = :part_id
-            """
-        ).params(user_id=parts.user_id, part_id=parts.part_id)).fetchone()
-
-        dollars = int(parts.price)
-        cents = (parts.price - dollars) * 100
-
-        if existing_quantity:
-            connection.execute(sqlalchemy.text(
+        try:
+            existing_quantity = connection.execute(sqlalchemy.text(
                 """
-                UPDATE user_parts 
-                SET quantity = quantity + :quantity, dollars = :dollars, cents = :cents
+                SELECT quantity FROM user_parts 
                 WHERE user_id = :user_id AND part_id = :part_id
                 """
-            ).params(user_id=parts.user_id, 
-                        part_id=parts.part_id, 
-                        quantity=parts.quantity, 
-                        dollars=dollars,
-                        cents=cents))
-        else:
-            connection.execute(sqlalchemy.text(
-                """
-                INSERT INTO user_parts (user_id, part_id, quantity, dollars, cents)
-                VALUES (:user_id, :part_id, :quantity, :dollars, :cents)
-                """
-            ).params(user_id=parts.user_id, 
-                        part_id=parts.part_id, 
-                        quantity=parts.quantity, 
-                        dollars=dollars,
-                        cents=cents))
+            ).params(user_id=parts.user_id, part_id=parts.part_id)).fetchone()
 
-        return {"status": "success", "message": "Items added/updated in user's catalog"}
+            dollars = int(parts.price)
+            cents = (parts.price - dollars) * 100
+
+            if existing_quantity:
+                connection.execute(sqlalchemy.text(
+                    """
+                    UPDATE user_parts 
+                    SET quantity = quantity + :quantity, dollars = :dollars, cents = :cents
+                    WHERE user_id = :user_id AND part_id = :part_id
+                    """
+                ).params(user_id=parts.user_id, 
+                            part_id=parts.part_id, 
+                            quantity=parts.quantity, 
+                            dollars=dollars,
+                            cents=cents))
+            else:
+                connection.execute(sqlalchemy.text(
+                    """
+                    INSERT INTO user_parts (user_id, part_id, quantity, dollars, cents)
+                    VALUES (:user_id, :part_id, :quantity, :dollars, :cents)
+                    """
+                ).params(user_id=parts.user_id, 
+                            part_id=parts.part_id, 
+                            quantity=parts.quantity, 
+                            dollars=dollars,
+                            cents=cents))
+
+            return {"status": "success", "message": "Items added/updated in user's catalog"}
+        except IntegrityError as e:
+            return {"status": "error", "message": "Database integrity error: " + str(e.orig)}
+        except ValueError as e:
+            return {"status": "error", "message": "Value error: " + str(e)}
+        except SQLAlchemyError as e:
+            return {"status": "error", "message": "Database error: " + str(e.orig)}
+        except Exception as e:
+            return {"status": "error", "message": "An unexpected error occurred: " + str(e)}
     
 @router.get("/catalog/search_user_catalog", tags=["catalog"])
 def search_user_catalog(
