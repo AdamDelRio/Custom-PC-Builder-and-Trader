@@ -36,7 +36,7 @@ def add_item_to_template(user_id, template_id, part_id, template_part: TemplateP
     Add a PC template part to an existing template
     """
     with db.engine.begin() as connection:
-        temp_part_id = connection.execute(statement=sqlalchemy.text("INSERT INTO pc_template_parts (template_id, user_id, part_id, quantity, user_part) "
+        connection.execute(statement=sqlalchemy.text("INSERT INTO pc_template_parts (template_id, user_id, part_id, quantity, user_part) "
                                            "VALUES (:template_id, :user_id, :part_id, :quantity, :user_part) "),
                                            parameters= {
                                                "template_id": template_id,
@@ -45,7 +45,7 @@ def add_item_to_template(user_id, template_id, part_id, template_part: TemplateP
                                                "quantity" :template_part.quantity,
                                                "user_part": template_part.user_item
                                            })
-        return temp_part_id
+        return "Item added to template"
         
 @router.post('/{template_id}/removeitem/{part_id}')
 def remove_item_from_template(template_id, part_id, template_part:TemplatePart):
